@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings | PlexRoulette</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <script>
+        const savedTheme = localStorage.getItem('theme') || '{{ default_theme }}';
+        document.documentElement.classList.add(savedTheme);
+    </script>
+</head>
+<body>
+<div class="container">
+
+    <div class="top-bar">
+        <a href="{{ url_for('index') }}">
+            <button type="button">🎲 Picker</button>
+        </a>
+        <a href="{{ url_for('watchlist') }}">
+            <button type="button">📺 Watchlist</button>
+        </a>
+        <button id="theme-toggle" type="button" onclick="toggleTheme()">☀️</button>
+    </div>
+
+    <div class="logo-container">
+        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="PlexRoulette Logo">
+        <h1>Settings</h1>
+    </div>
+
+    {% if success %}
+    <div style="background: rgba(46, 204, 113, 0.15); color: #2ecc71; padding: 12px 16px; border-radius: 8px; margin-bottom: 24px; text-align: center;">
+        Settings saved successfully.
+    </div>
+    {% endif %}
+
+    <form method="POST">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="plex_server_url">
+                    Plex Server
+                    <span class="tooltip">❓
+                        <span class="tooltiptext">Select the Plex server that contains your media libraries.</span>
+                    </span>
+                </label>
+                <select id="plex_server_url" name="plex_server_url" required>
+                    {% if servers %}
+                        {% for server in servers %}
+                            <option value="{{ server.uri }}" {% if config.plex_server_url == server.uri %}selected{% endif %}>{{ server.name }}</option>
+                        {% endfor %}
+                    {% else %}
+                        <option disabled selected>No servers available</option>
+                    {% endif %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="movies_library">
+                    Movies Library
+                    <span class="tooltip">❓
+                        <span class="tooltiptext">Select the library containing your movies. Choose "None" to exclude movies from results.</span>
+                    </span>
+                </label>
+                <select id="movies_library" name="movies_library">
+                    <option value="" {% if not config.movies_library %}selected{% endif %}>None</option>
+                    {% for lib in libraries %}
+                        <option value="{{ lib.title }}" {% if config.movies_library == lib.title %}selected{% endif %}>{{ lib.title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="tvshows_library">
+                    TV Shows Library
+                    <span class="tooltip">❓
+                        <span class="tooltiptext">Select the library containing your TV shows. Choose "None" to exclude TV shows from results.</span>
+                    </span>
+                </label>
+                <select id="tvshows_library" name="tvshows_library">
+                    <option value="" {% if not config.tvshows_library %}selected{% endif %}>None</option>
+                    {% for lib in libraries %}
+                        <option value="{{ lib.title }}" {% if config.tvshows_library == lib.title %}selected{% endif %}>{{ lib.title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="default_theme">
+                    Theme
+                    <span class="tooltip">❓
+                        <span class="tooltiptext">Choose your preferred color scheme. You can also toggle this using the button in the top bar.</span>
+                    </span>
+                </label>
+                <select id="default_theme" name="default_theme" onchange="applyThemeFromDropdown()">
+                    <option value="dark" {% if config.default_theme == 'dark' %}selected{% endif %}>Dark</option>
+                    <option value="light" {% if config.default_theme == 'light' %}selected{% endif %}>Light</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    Session History
+                    <span class="tooltip">❓
+                        <span class="tooltiptext">When enabled, your recent picks are saved during your browsing session for easy reference.</span>
+                    </span>
+                </label>
+                <div style="padding-top: 12px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" id="enable_history" name="enable_history"
+                               {% if config.enable_history != false %}checked{% endif %}>
+                        <span style="color: var(--text-secondary);">Save recent picks</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <button type="submit">💾 Save Settings</button>
+    </form>
+
+    <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border);">
+        <form method="GET" action="{{ url_for('signout') }}">
+            <button type="submit" style="background: #cc3333; border: none; width: auto; padding: 12px 24px;">
+                🚪 Sign Out
+            </button>
+        </form>
+    </div>
+
+    <section style="margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border);">
+        <h2 style="font-size: 18px; margin-bottom: 16px; color: var(--text-primary);">About These Settings</h2>
+        
+        <p style="margin-bottom: 12px; color: var(--text-secondary); line-height: 1.6;">
+            <strong style="color: var(--text-primary);">Plex Server:</strong> 
+            This dropdown lists all Plex servers linked to your account. Select the server that contains your movie and TV show libraries.
+        </p>
+        
+        <p style="margin-bottom: 12px; color: var(--text-secondary); line-height: 1.6;">
+            <strong style="color: var(--text-primary);">Movies Library / TV Shows Library:</strong> 
+            Choose the specific libraries from your Plex server. If you only have one type of media, set the other to "None."
+        </p>
+        
+        <p style="margin-bottom: 12px; color: var(--text-secondary); line-height: 1.6;">
+            <strong style="color: var(--text-primary);">Theme:</strong> 
+            Select your preferred appearance. This setting is saved and will persist across sessions.
+        </p>
+        
+        <p style="margin-bottom: 0; color: var(--text-secondary); line-height: 1.6;">
+            <strong style="color: var(--text-primary);">Session History:</strong> 
+            When enabled, PlexRoulette keeps track of your last 20 picks. You can view or clear your history from the main picker page.
+        </p>
+    </section>
+
+</div>
+
+<script>
+    function toggleTheme() {
+        const html = document.documentElement;
+        const toggleBtn = document.getElementById('theme-toggle');
+        const dropdown = document.getElementById('default_theme');
+        const newTheme = html.classList.contains('dark') ? 'light' : 'dark';
+        html.classList.remove('dark', 'light');
+        html.classList.add(newTheme);
+        localStorage.setItem('theme', newTheme);
+        if (toggleBtn) toggleBtn.innerText = newTheme === 'dark' ? '☀️' : '🌙';
+        if (dropdown) dropdown.value = newTheme;
+    }
+
+    function applyThemeFromDropdown() {
+        const selectedTheme = document.getElementById('default_theme').value;
+        document.documentElement.classList.remove('dark', 'light');
+        document.documentElement.classList.add(selectedTheme);
+        localStorage.setItem('theme', selectedTheme);
+        const toggleBtn = document.getElementById('theme-toggle');
+        if (toggleBtn) toggleBtn.innerText = selectedTheme === 'dark' ? '☀️' : '🌙';
+    }
+
+    window.onload = () => {
+        const savedTheme = localStorage.getItem('theme') || '{{ default_theme }}';
+        document.documentElement.classList.remove('dark', 'light');
+        document.documentElement.classList.add(savedTheme);
+        const toggleBtn = document.getElementById('theme-toggle');
+        const dropdown = document.getElementById('default_theme');
+        if (toggleBtn) toggleBtn.innerText = savedTheme === 'dark' ? '☀️' : '🌙';
+        if (dropdown) dropdown.value = savedTheme;
+    };
+</script>
+</body>
+</html>

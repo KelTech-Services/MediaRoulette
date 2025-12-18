@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlexRoulette</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <script>
+        const savedTheme = localStorage.getItem('theme') || '{{ config.default_theme | default("dark") }}';
+        document.documentElement.classList.add(savedTheme);
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const toggleBtn = document.getElementById('theme-toggle');
+            const newTheme = html.classList.contains('dark') ? 'light' : 'dark';
+            html.classList.remove('dark', 'light');
+            html.classList.add(newTheme);
+            localStorage.setItem('theme', newTheme);
+            if (toggleBtn) toggleBtn.innerText = newTheme === 'dark' ? '☀️' : '🌙';
+        }
+
+        window.onload = () => {
+            const toggleBtn = document.getElementById('theme-toggle');
+            const currentTheme = localStorage.getItem('theme') || '{{ config.default_theme | default("dark") }}';
+            if (toggleBtn) toggleBtn.innerText = currentTheme === 'dark' ? '☀️' : '🌙';
+        };
+    </script>
+</head>
+<body>
+<div class="container">
+
+    <div class="top-bar">
+        <a href="{{ url_for('watchlist') }}">
+            <button type="button">📺 Watchlist</button>
+        </a>
+        <a href="{{ url_for('settings') }}">
+            <button type="button">⚙️ Settings</button>
+        </a>
+        <button id="theme-toggle" type="button" onclick="toggleTheme()">☀️</button>
+    </div>
+
+    <div class="logo-container">
+        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="PlexRoulette Logo">
+    </div>
+
+    {% if config.get('plex_token') %}
+
+    <form method="POST">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="media_type">Media Type</label>
+                <select name="media_type" id="media_type">
+                    <option value="both" {% if request.form.media_type == 'both' %}selected{% endif %}>Movies & TV Shows</option>
+                    <option value="movie" {% if request.form.media_type == 'movie' %}selected{% endif %}>Movies Only</option>
+                    <option value="show" {% if request.form.media_type == 'show' %}selected{% endif %}>TV Shows Only</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="genre">Genre</label>
+                <select name="genre" id="genre">
+                    <option value="">All Genres</option>
+                    {% for genre in genres %}
+                        <option value="{{ genre }}" {% if request.form.genre == genre %}selected{% endif %}>{{ genre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="rating">Rating</label>
+                <select name="rating" id="rating">
+                    <option value="">All Ratings</option>
+                    {% for rating in rating_options %}
+                        <option value="{{ rating }}" {% if request.form.rating == rating %}selected{% endif %}>{{ rating }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="keyword">Keyword</label>
+                <input type="text" name="keyword" id="keyword" placeholder="e.g. survival, comedy" value="{{ request.form.keyword }}">
+            </div>
+        </div>
+
+        <div class="checkbox-row">
+            <label><input type="checkbox" name="unwatched" {% if request.form.unwatched %}checked{% endif %}> Unwatched Only</label>
+            <label><input type="checkbox" name="recent_releases" {% if request.form.recent_releases %}checked{% endif %}> Recent (5 Years)</label>
+            <label><input type="checkbox" name="show_three" {% if request.form.show_three %}checked{% endif %}> Show 3 Results</label>
+        </div>
+
+        <button type="submit">🎲 Spin</button>
+    </form>
+
+    {% if results is not none and results|length == 0 %}
+    <p class="text-center text-muted" style="margin: 24px 0;">No matches found. Try adjusting your filters.</p>
+    {% endif %}
+
+    {% for result in results %}
+    <div class="result-card" style="text-align: center;">
+        {% if result.poster %}
+            <img src="{{ result.poster }}" alt="Poster" class="poster">
+        {% endif %}
+        <h2>{{ result.title }} ({{ result.year }})</h2>
+        {% if result.runtime and result.runtime != 'N/A' %}
+        <p><strong>Runtime:</strong> {{ result.runtime }} min</p>
+        {% endif %}
+        <p><strong>Genres:</strong> {{ result.genres or 'N/A' }}</p>
+        <p><strong>Rating:</strong> {{ result.rating or 'N/A' }}</p>
+        {% if result.audience_rating %}
+        <p><strong>Audience Score:</strong> 🍅 {{ result.audience_rating }}</p>
+        {% endif %}
+        <p style="margin: 16px 0;">{{ result.summary }}</p>
+
+        <div style="margin-top: 16px;">
+            {% if result.link %}
+            <a href="{{ result.link }}" target="_blank">
+                <button type="button">▶️ Watch in Plex</button>
+            </a>
+            {% endif %}
+
+            <form method="POST" style="display: inline;">
+                <input type="hidden" name="saved_title" value="{{ result.title }}">
+                <input type="hidden" name="saved_year" value="{{ result.year }}">
+                <input type="hidden" name="saved_summary" value="{{ result.summary }}">
+                <input type="hidden" name="saved_genres" value="{{ result.genres }}">
+                <input type="hidden" name="saved_poster" value="{{ result.poster }}">
+                <input type="hidden" name="saved_link" value="{{ result.link }}">
+                <input type="hidden" name="saved_rating" value="{{ result.rating }}">
+                <input type="hidden" name="saved_runtime" value="{{ result.runtime }}">
+                <input type="hidden" name="saved_audience_rating" value="{{ result.audience_rating }}">
+                <button type="submit" name="add_to_watchlist" value="true">➕ Add to Watchlist</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+
+    {% if config.enable_history != false %}
+        {% if show_history %}
+        <div class="history-card">
+            <h3>Session History</h3>
+            <form method="POST" style="display: flex; justify-content: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
+                <button type="submit" name="toggle_history" value="true" style="width: auto;">Hide</button>
+                <button type="submit" name="clear_history" value="true" style="width: auto; background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border);">Clear</button>
+            </form>
+            {% for item in pick_history %}
+            <div class="result-card" style="text-align: center;">
+                {% if item.poster %}
+                    <img src="{{ item.poster }}" alt="Poster" class="poster">
+                {% endif %}
+                <h2>{{ item.title }} ({{ item.year }})</h2>
+                {% if item.runtime and item.runtime != 'N/A' %}
+                <p><strong>Runtime:</strong> {{ item.runtime }} min</p>
+                {% endif %}
+                <p><strong>Genres:</strong> {{ item.genres or 'N/A' }}</p>
+                <p><strong>Rating:</strong> {{ item.rating or 'N/A' }}</p>
+                {% if item.audience_rating %}
+                <p><strong>Audience Score:</strong> 🍅 {{ item.audience_rating }}</p>
+                {% endif %}
+                <p style="margin: 16px 0;">{{ item.summary }}</p>
+                {% if item.link %}
+                <a href="{{ item.link }}" target="_blank">
+                    <button type="button">▶️ Watch in Plex</button>
+                </a>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <form method="POST" style="text-align: center; margin-top: 32px;">
+            <button type="submit" name="toggle_history" value="true" style="width: auto; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border);">📖 View History</button>
+        </form>
+        {% endif %}
+    {% endif %}
+
+    {% else %}
+    <div style="text-align: center; padding: 40px 20px;">
+        <h2 style="margin-bottom: 16px;">Welcome to PlexRoulette</h2>
+        <p class="text-muted" style="margin-bottom: 24px;">Sign in with your Plex account to get started.</p>
+        <a href="{{ url_for('plex_login') }}">
+            <button type="button" style="width: auto; padding: 14px 32px;">🔐 Sign in with Plex</button>
+        </a>
+    </div>
+    {% endif %}
+
+</div>
+</body>
+</html>

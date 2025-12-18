@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In | PlexRoulette</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <style>
+        .login-container {
+            max-width: 420px;
+            margin: 0 auto;
+            padding: 40px 24px;
+            text-align: center;
+        }
+
+        .login-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 40px 32px;
+            box-shadow: 0 8px 32px var(--shadow);
+        }
+
+        .login-card h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .login-card p {
+            color: var(--text-secondary);
+            font-size: 15px;
+            margin-bottom: 8px;
+        }
+
+        .login-card a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .login-card a:hover {
+            text-decoration: underline;
+        }
+
+        .code-display {
+            font-size: 42px;
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: 8px;
+            margin: 28px 0;
+            font-family: 'SF Mono', Monaco, Consolas, monospace;
+        }
+
+        .timer {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+
+        .spinner {
+            width: 36px;
+            height: 36px;
+            margin: 0 auto;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 20px;
+            padding: 12px;
+            background: rgba(231, 76, 60, 0.1);
+            border-radius: 8px;
+            display: none;
+        }
+
+        .status-text {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo-container">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="PlexRoulette Logo">
+        </div>
+
+        <div class="login-card">
+            <h1>Sign in with Plex</h1>
+            <p>Enter this code at <a href="https://plex.tv/link" target="_blank">plex.tv/link</a></p>
+            
+            <div class="code-display">{{ code }}</div>
+            
+            <div class="timer">
+                Expires in <span id="countdown" data-seconds="{{ expires_in|int }}">--:--</span>
+            </div>
+            
+            <div class="spinner"></div>
+            <p class="status-text">Waiting for authorization...</p>
+            
+            <div id="error" class="error-message"></div>
+        </div>
+    </div>
+
+    <script>
+        const countdownEl = document.getElementById('countdown');
+        const errorEl = document.getElementById('error');
+        let countdown = parseInt(countdownEl.getAttribute("data-seconds"));
+
+        const formatTime = (seconds) => {
+            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const s = (seconds % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        };
+
+        countdownEl.innerText = formatTime(countdown);
+
+        const timerInterval = setInterval(() => {
+            countdown--;
+            countdownEl.innerText = formatTime(countdown);
+
+            if (countdown <= 0) {
+                clearInterval(timerInterval);
+                clearInterval(pollingInterval);
+                errorEl.style.display = 'block';
+                errorEl.innerText = 'Code expired. Refresh the page to try again.';
+            }
+        }, 1000);
+
+        const poll = () => {
+            fetch('/plex_poll')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        clearInterval(timerInterval);
+                        clearInterval(pollingInterval);
+                        window.location.href = '/settings';
+                    } else if (data.status === 'error') {
+                        errorEl.style.display = 'block';
+                        errorEl.innerText = data.message || 'An error occurred.';
+                    }
+                })
+                .catch(err => {
+                    console.error('Polling error:', err);
+                });
+        };
+
+        const pollingInterval = setInterval(poll, 4000);
+    </script>
+</body>
+</html>

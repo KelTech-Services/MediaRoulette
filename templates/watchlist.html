@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watchlist | PlexRoulette</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <script>
+        const savedTheme = localStorage.getItem('theme') || '{{ default_theme }}';
+        document.documentElement.classList.add(savedTheme);
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const toggleBtn = document.getElementById('theme-toggle');
+            const newTheme = html.classList.contains('dark') ? 'light' : 'dark';
+            html.classList.remove('dark', 'light');
+            html.classList.add(newTheme);
+            localStorage.setItem('theme', newTheme);
+            if (toggleBtn) toggleBtn.innerText = newTheme === 'dark' ? '☀️' : '🌙';
+        }
+
+        function exportWatchlist(format) {
+            window.location.href = `/export_watchlist?format=${format}`;
+        }
+
+        window.onload = () => {
+            const toggleBtn = document.getElementById('theme-toggle');
+            if (toggleBtn) toggleBtn.innerText = savedTheme === 'dark' ? '☀️' : '🌙';
+        };
+    </script>
+</head>
+<body>
+<div class="container">
+
+    <div class="top-bar">
+        <a href="{{ url_for('index') }}">
+            <button type="button">🎲 Picker</button>
+        </a>
+        <a href="{{ url_for('settings') }}">
+            <button type="button">⚙️ Settings</button>
+        </a>
+        {% if watchlist %}
+        <details class="export-dropdown">
+            <summary>📤 Export</summary>
+            <ul>
+                <li onclick="exportWatchlist('json')">JSON</li>
+                <li onclick="exportWatchlist('csv')">CSV</li>
+            </ul>
+        </details>
+        {% endif %}
+        <button id="theme-toggle" type="button" onclick="toggleTheme()">☀️</button>
+    </div>
+
+    <div class="logo-container">
+        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="PlexRoulette Logo">
+        <h1>Watchlist</h1>
+    </div>
+
+    {% if watchlist %}
+        <p class="text-muted text-center" style="margin-bottom: 24px;">{{ watchlist|length }} item{% if watchlist|length != 1 %}s{% endif %}</p>
+        
+        {% for item in watchlist %}
+        <div class="result-card" style="text-align: center;">
+            {% if item.poster %}
+                <img src="{{ item.poster }}" alt="Poster" class="poster">
+            {% endif %}
+            <h2>{{ item.title }} ({{ item.year }})</h2>
+            {% if item.runtime and item.runtime != 'N/A' %}
+            <p><strong>Runtime:</strong> {{ item.runtime }} min</p>
+            {% endif %}
+            <p><strong>Genres:</strong> {{ item.genres or 'N/A' }}</p>
+            <p><strong>Rating:</strong> {{ item.rating or 'N/A' }}</p>
+            {% if item.audience_rating %}
+            <p><strong>Audience Score:</strong> 🍅 {{ item.audience_rating }}</p>
+            {% endif %}
+            <p style="margin: 16px 0;">{{ item.summary }}</p>
+
+            <div style="margin-top: 16px;">
+                {% if item.link %}
+                <a href="{{ item.link }}" target="_blank">
+                    <button type="button">▶️ Watch in Plex</button>
+                </a>
+                {% endif %}
+
+                <form method="POST" action="{{ url_for('watchlist') }}" style="display: inline;">
+                    <input type="hidden" name="title" value="{{ item.title }}">
+                    <input type="hidden" name="year" value="{{ item.year }}">
+                    <button type="submit" style="background: #cc3333; border: none;">
+                        🗑 Remove
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div style="text-align: center; padding: 60px 20px;">
+            <p style="font-size: 48px; margin-bottom: 16px;">📺</p>
+            <h2 style="margin-bottom: 8px; color: var(--text-primary);">Your watchlist is empty</h2>
+            <p class="text-muted" style="margin-bottom: 24px;">Add something from the picker to watch later.</p>
+            <a href="{{ url_for('index') }}">
+                <button type="button" style="width: auto; padding: 12px 24px;">🎲 Go to Picker</button>
+            </a>
+        </div>
+    {% endif %}
+
+</div>
+</body>
+</html>
