@@ -1,0 +1,43 @@
+name: Feature Request
+description: Suggest a new feature or improvement
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a feature! We appreciate your input to make PlexRoulette better.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the feature
+      description: A clear description of the feature you'd like to see.
+      placeholder: What would you like PlexRoulette to do?
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem it solves
+      description: Is this related to a problem or frustration? Describe it.
+      placeholder: I'm always frustrated when...
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Have you considered any alternative solutions or workarounds?
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Any other information, mockups, or screenshots that would help explain your idea.
+    validations:
+      required: false
