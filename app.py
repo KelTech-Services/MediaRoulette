@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, Response
+from functools import wraps
 import random
 import requests
 import json
@@ -6,6 +7,7 @@ import os
 import sys
 from datetime import datetime, timedelta
 from xml.etree import ElementTree
+from werkzeug.security import generate_password_hash, check_password_hash
 
 # Force unbuffered output for Docker logs
 sys.stdout.reconfigure(line_buffering=True)
@@ -13,6 +15,7 @@ sys.stdout.reconfigure(line_buffering=True)
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 CONFIG_PATH = os.path.join(DATA_DIR, 'config.json')
 WATCHLIST_FILE = os.path.join(DATA_DIR, 'watchlist.json')
+USERS_FILE = os.path.join(DATA_DIR, 'users.json')
 
 PLEX_PRODUCT = "PlexRouletteApp"
 PLEX_CLIENT_IDENTIFIER = "plexroulette-client-001"
@@ -35,6 +38,30 @@ if not os.path.exists(WATCHLIST_FILE):
     with open(WATCHLIST_FILE, 'w') as f:
         json.dump([], f)
 
+def load_users():
+    if not os.path.exists(USERS_FILE):
+        return {}
+    with open(USERS_FILE, 'r') as f:
+        return json.load(f)
+
+def save_users(users):
+    with open(USERS_FILE, 'w') as f:
+        json.dump(users, f, indent=2)
+
+def is_setup_complete():
+    users = load_users()
+    return len(users) > 0
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not is_setup_complete():
+            return redirect(url_for('setup'))
+        if not session.get('logged_in'):
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
 RATING_OPTIONS = [
     'G', 'PG', 'PG-13', 'R', 'NC-17', 'Not Rated', 'Unrated',
     'TV-Y', 'TV-Y7', 'TV-G', 'TV-PG', 'TV-14', 'TV-MA'
@@ -56,7 +83,75 @@ def load_watchlist():
     with open(WATCHLIST_FILE, 'r') as f:
         return json.load(f)
 
+@app.route('/setup', methods=['GET', 'POST'])
+def setup():
+    if is_setup_complete():
+        return redirect(url_for('login'))
+    
+    error = None
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
+        confirm_password = request.form.get('confirm_password', '')
+        
+        if not username or not password:
+            error = 'Username and password are required.'
+        elif len(password) < 6:
+            error = 'Password must be at least 6 characters.'
+        elif password != confirm_password:
+            error = 'Passwords do not match.'
+        else:
+            users = {}
+            users[username] = {
+                'password_hash': generate_password_hash(password),
+                'is_admin': True,
+                'created_at': datetime.now().isoformat()
+            }
+            save_users(users)
+            session['logged_in'] = True
+            session['username'] = username
+            print(f"Admin account created: {username}", flush=True)
+            return redirect(url_for('plex_login'))
+    
+    return render_template('setup.html', error=error)
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if not is_setup_complete():
+        return redirect(url_for('setup'))
+    
+    if session.get('logged_in'):
+        return redirect(url_for('index'))
+    
+    error = None
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
+        
+        users = load_users()
+        user = users.get(username)
+        
+        if user and check_password_hash(user['password_hash'], password):
+            session['logged_in'] = True
+            session['username'] = username
+            print(f"User logged in: {username}", flush=True)
+            return redirect(url_for('index'))
+        else:
+            error = 'Invalid username or password.'
+            print(f"Failed login attempt for: {username}", flush=True)
+    
+    return render_template('login.html', error=error)
+
+@app.route('/app_logout')
+def app_logout():
+    username = session.get('username', 'unknown')
+    session.pop('logged_in', None)
+    session.pop('username', None)
+    print(f"User logged out: {username}", flush=True)
+    return redirect(url_for('login'))
+
 @app.route('/plex_login')
+@login_required
 def plex_login():
     headers = {
         'X-Plex-Client-Identifier': PLEX_CLIENT_IDENTIFIER,
@@ -82,6 +177,7 @@ def plex_login():
     return render_template('plex_login.html', code=session['plex_code'], expires_in=session['plex_expires'])
 
 @app.route('/plex_poll')
+@login_required
 def plex_poll():
     pin_id = session.get('plex_pin_id')
     if not pin_id:
@@ -151,6 +247,7 @@ def plex_poll():
     return jsonify({'status': 'pending'})
 
 @app.route('/signout')
+@login_required
 def signout():
     session.clear()
     config = load_config()
@@ -230,6 +327,7 @@ def build_item_data(item, machine_id):
     }
 
 @app.route('/export_watchlist')
+@login_required
 def export_watchlist():
     watchlist = load_watchlist()
     export_format = request.args.get('format', 'json')
@@ -245,6 +343,7 @@ def export_watchlist():
     return Response(json.dumps(watchlist, indent=2), mimetype='application/json', headers={'Content-Disposition': 'attachment; filename=watchlist.json'})
 
 @app.route('/', methods=['GET', 'POST'])
+@login_required
 def index():
     config = load_config()
 
@@ -359,6 +458,7 @@ def index():
                            config=config)
 
 @app.route('/settings', methods=['GET', 'POST'])
+@login_required
 def settings():
     config = load_config()
     if request.method == 'POST':
@@ -384,6 +484,7 @@ def settings():
                            default_theme=config.get("default_theme", "dark"))
 
 @app.route('/watchlist', methods=['GET', 'POST'])
+@login_required
 def watchlist():
     if request.method == 'POST':
         title = request.form.get('title')

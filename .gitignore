@@ -1,6 +1,7 @@
 # User data (created at runtime)
 data/config.json
 data/watchlist.json
+data/users.json
 
 # Python
 __pycache__/

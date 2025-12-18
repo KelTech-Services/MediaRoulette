@@ -123,11 +123,18 @@
     </form>
 
     <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border);">
-        <form method="GET" action="{{ url_for('signout') }}">
-            <button type="submit" style="background: #cc3333; border: none; width: auto; padding: 12px 24px;">
-                🚪 Sign Out
-            </button>
-        </form>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <form method="GET" action="{{ url_for('signout') }}">
+                <button type="submit" style="background: #cc3333; border: none; width: auto; padding: 12px 24px;">
+                    🔌 Disconnect Plex
+                </button>
+            </form>
+            <form method="GET" action="{{ url_for('app_logout') }}">
+                <button type="submit" style="background: #666; border: none; width: auto; padding: 12px 24px;">
+                    🚪 Log Out
+                </button>
+            </form>
+        </div>
     </div>
 
     <section style="margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border);">
