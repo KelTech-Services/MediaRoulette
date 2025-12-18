@@ -3,8 +3,12 @@ import random
 import requests
 import json
 import os
+import sys
 from datetime import datetime, timedelta
 from xml.etree import ElementTree
+
+# Force unbuffered output for Docker logs
+sys.stdout.reconfigure(line_buffering=True)
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 CONFIG_PATH = os.path.join(DATA_DIR, 'config.json')
@@ -184,13 +188,19 @@ def get_items_from_library(key, unwatched=False):
         return []
     url = f"{session.get('plex_server_url')}/library/sections/{key}/all"
     headers = {'Accept': 'application/json'}
-    params = {'X-Plex-Token': session.get('plex_token')}
+    params = {
+        'X-Plex-Token': session.get('plex_token'),
+        'X-Plex-Container-Start': 0,
+        'X-Plex-Container-Size': 10000  # Request up to 10k items
+    }
     if unwatched:
-        params['viewCount'] = 0
+        params['unwatched'] = 1
     try:
-        r = requests.get(url, headers=headers, params=params, timeout=10)
+        r = requests.get(url, headers=headers, params=params, timeout=30)
         r.raise_for_status()
-        return r.json().get('MediaContainer', {}).get('Metadata', [])
+        items = r.json().get('MediaContainer', {}).get('Metadata', [])
+        print(f"Library {key}: fetched {len(items)} items (unwatched={unwatched})")
+        return items
     except Exception as e:
         print(f"Failed to fetch library {key}: {e}")
         return []
@@ -269,6 +279,7 @@ def index():
     results = []
 
     if request.method == 'POST':
+        print(f"POST received. Form keys: {list(form.keys())}", flush=True)
         if 'toggle_history' in form:
             session['show_history'] = not session.get('show_history', False)
         elif 'clear_history' in form:
@@ -292,9 +303,11 @@ def index():
                     with open(WATCHLIST_FILE, 'w') as f:
                         json.dump(watchlist, f, indent=2)
         else:
+            print("Entering spin logic...", flush=True)
             media_type = form.get('media_type', 'both')
             unwatched = 'unwatched' in form
             filtered = []
+            print(f"media_type={media_type}, unwatched={unwatched}, genre={form.get('genre')}", flush=True)
 
             if media_type == 'movie' and movie_key:
                 filtered += get_items_from_library(movie_key, unwatched=unwatched)
@@ -305,9 +318,18 @@ def index():
                     filtered += get_items_from_library(movie_key, unwatched=unwatched)
                 if show_key:
                     filtered += get_items_from_library(show_key, unwatched=unwatched)
+            
+            print(f"After fetch: {len(filtered)} items total", flush=True)
 
             if form.get('genre'):
-                filtered = [i for i in filtered if any(g['tag'] == form.get('genre') for g in i.get('Genre', []))]
+                selected_genre = form.get('genre').lower()
+                # Handle combined genres like "Action/Adventure" - match if any part matches
+                genre_parts = [g.strip().lower() for g in selected_genre.split('/')]
+                filtered = [i for i in filtered if any(
+                    any(part in g['tag'].lower() for part in genre_parts)
+                    for g in i.get('Genre', [])
+                )]
+                print(f"After genre filter ({form.get('genre')}): {len(filtered)} items", flush=True)
             if form.get('rating'):
                 filtered = [i for i in filtered if i.get('contentRating') == form.get('rating')]
             if form.get('keyword'):
@@ -316,8 +338,10 @@ def index():
                 cutoff = datetime.now() - timedelta(days=5 * 365)
                 filtered = [i for i in filtered if i.get('originallyAvailableAt') and datetime.strptime(i.get('originallyAvailableAt'), "%Y-%m-%d") > cutoff]
 
+            print(f"Final filtered count: {len(filtered)}", flush=True)
             picks = 3 if 'show_three' in form else 1
             results = [build_item_data(i, machine_id) for i in random.sample(filtered, min(picks, len(filtered)))]
+            print(f"Picked {len(results)} result(s): {[r['title'] for r in results]}", flush=True)
 
             session['current_results'] = results
             if config.get('enable_history', True):
