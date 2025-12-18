@@ -86,8 +86,21 @@ docker-compose up -d
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `SECRET_KEY` | Flask session encryption key | `plexroulette-dev-key-change-in-prod` |
+| `SECRET_KEY` | Flask session encryption key (see below) | `plexroulette-dev-key-change-in-prod` |
 | `PORT` | Port to run the application | `5000` |
+
+### Generating a Secret Key
+
+The `SECRET_KEY` is used to securely sign session cookies. You should generate your own random key, especially if exposing the app outside your local network.
+
+**Option 1:** Generate one online at [IT Tools Token Generator](https://it-tools.tech/token-generator?length=32)
+
+**Option 2:** Generate via command line:
+```bash
+python3 -c "import secrets; print(secrets.token_hex(32))"
+```
+
+Then replace `your-secret-key-here` in the Docker command or compose file with your generated key.
 
 ### Data Storage
 
