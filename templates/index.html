@@ -101,6 +101,7 @@
         {% if result.poster %}
             <img src="{{ result.poster }}" alt="Poster" class="poster">
         {% endif %}
+        <span class="media-type-badge {{ 'movie' if result.media_type == 'Movie' else 'tvshow' }}">{{ result.media_type }}</span>
         <h2>{{ result.title }} ({{ result.year }})</h2>
         {% if result.runtime and result.runtime != 'N/A' %}
         <p><strong>Runtime:</strong> {{ result.runtime }} min</p>
@@ -129,6 +130,7 @@
                 <input type="hidden" name="saved_rating" value="{{ result.rating }}">
                 <input type="hidden" name="saved_runtime" value="{{ result.runtime }}">
                 <input type="hidden" name="saved_audience_rating" value="{{ result.audience_rating }}">
+                <input type="hidden" name="saved_media_type" value="{{ result.media_type }}">
                 <button type="submit" name="add_to_watchlist" value="true">➕ Add to Watchlist</button>
             </form>
         </div>
@@ -148,6 +150,7 @@
                 {% if item.poster %}
                     <img src="{{ item.poster }}" alt="Poster" class="poster">
                 {% endif %}
+                <span class="media-type-badge {{ 'movie' if item.media_type == 'Movie' else 'tvshow' }}">{{ item.media_type or 'Movie' }}</span>
                 <h2>{{ item.title }} ({{ item.year }})</h2>
                 {% if item.runtime and item.runtime != 'N/A' %}
                 <p><strong>Runtime:</strong> {{ item.runtime }} min</p>

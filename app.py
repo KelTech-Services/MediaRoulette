@@ -335,6 +335,7 @@ def build_item_data(item, machine_id):
     rating_key = item.get('ratingKey')
     duration = item.get('duration')
     runtime = int(duration / 60000) if duration else None
+    item_type = item.get('type', 'movie')  # 'movie' or 'show'
     return {
         'title': item.get('title'),
         'year': item.get('year'),
@@ -345,7 +346,8 @@ def build_item_data(item, machine_id):
         'rating': item.get('contentRating', 'Unrated'),
         'runtime': str(runtime) if runtime else 'N/A',
         'audience_rating': f"{item.get('audienceRating', 0):.1f}" if item.get('audienceRating') else None,
-        'audience_rating_image': item.get('audienceRatingImage')
+        'audience_rating_image': item.get('audienceRatingImage'),
+        'media_type': 'TV Show' if item_type == 'show' else 'Movie'
     }
 
 @app.route('/export_watchlist')
@@ -415,7 +417,8 @@ def index():
                 'link': form.get('saved_link'),
                 'rating': form.get('saved_rating'),
                 'runtime': form.get('saved_runtime'),
-                'audience_rating': form.get('saved_audience_rating')
+                'audience_rating': form.get('saved_audience_rating'),
+                'media_type': form.get('saved_media_type', 'Movie')
             }
             if item['title'] and item['year']:
                 watchlist = load_watchlist()

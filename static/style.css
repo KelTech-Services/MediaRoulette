@@ -487,3 +487,25 @@ button[style*="background-color: #d9534f"]:hover {
         margin-bottom: 8px;
     }
 }
+
+/* Media Type Badge */
+.media-type-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 12px 0 8px 0;
+}
+
+.media-type-badge.movie {
+    background: linear-gradient(135deg, #e5a00d, #cc8800);
+    color: #000;
+}
+
+.media-type-badge.tvshow {
+    background: linear-gradient(135deg, #cc3333, #aa2222);
+    color: #fff;
+}
