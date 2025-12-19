@@ -490,7 +490,9 @@ button[style*="background-color: #d9534f"]:hover {
 
 /* Media Type Badge */
 .media-type-badge {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     padding: 4px 12px;
     border-radius: 16px;
     font-size: 12px;
@@ -498,6 +500,11 @@ button[style*="background-color: #d9534f"]:hover {
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin: 12px 0 8px 0;
+}
+
+.media-type-badge img {
+    width: 20px;
+    height: 20px;
 }
 
 .media-type-badge.movie {
