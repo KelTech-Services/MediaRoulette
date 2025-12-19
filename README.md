@@ -9,14 +9,15 @@
 </p>
 
 <p align="center">
-  A web app that randomly selects movies and TV shows from your Plex library based on your preferences.
+  A web app that randomly selects <strong>movies and TV shows</strong> from your Plex library based on your preferences.<br>
+  Great for large libraries where scrolling becomes overwhelming.
 </p>
 
 ---
 
 ## Features
 
-- 🎲 **Random Picker** — Randomly selects content from your Plex library
+- 🎲 **Random Picker** — Randomly selects from your Movies and TV Shows libraries
 - 🎯 **Smart Filters** — Filter by media type, genre, rating, keyword, and more
 - 📺 **Watchlist** — Save picks for later viewing
 - 🌙 **Dark/Light Themes** — Choose your preferred appearance
