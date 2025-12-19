@@ -451,6 +451,7 @@ def index():
                     watchlist.append(item)
                     with open(WATCHLIST_FILE, 'w') as f:
                         json.dump(watchlist, f, indent=2)
+            return redirect(url_for('watchlist'))
         else:
             print("Entering spin logic...", flush=True)
             media_type = form.get('media_type', 'both')
@@ -469,6 +470,19 @@ def index():
                     filtered += get_items_from_library(show_key, unwatched=unwatched)
             
             print(f"After fetch: {len(filtered)} items total", flush=True)
+
+            # Additional client-side unwatched filter (Plex API param unreliable for shows)
+            if unwatched:
+                def is_unwatched(item):
+                    # For movies: viewCount = 0 or missing means unwatched
+                    # For shows: viewedLeafCount = 0 or missing means fully unwatched
+                    if item.get('type') == 'show':
+                        return item.get('viewedLeafCount', 0) == 0
+                    else:
+                        return item.get('viewCount', 0) == 0
+                before_filter = len(filtered)
+                filtered = [i for i in filtered if is_unwatched(i)]
+                print(f"After unwatched client filter: {len(filtered)} items (removed {before_filter - len(filtered)})", flush=True)
 
             if form.get('genre'):
                 selected_genre = form.get('genre').lower()
