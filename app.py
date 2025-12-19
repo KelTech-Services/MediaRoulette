@@ -16,6 +16,7 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 CONFIG_PATH = os.path.join(DATA_DIR, 'config.json')
 WATCHLIST_FILE = os.path.join(DATA_DIR, 'watchlist.json')
 USERS_FILE = os.path.join(DATA_DIR, 'users.json')
+HISTORY_FILE = os.path.join(DATA_DIR, 'pick_history.json')
 
 PLEX_PRODUCT = "PlexRouletteApp"
 PLEX_CLIENT_IDENTIFIER = "plexroulette-client-001"
@@ -82,6 +83,30 @@ def load_watchlist():
         return []
     with open(WATCHLIST_FILE, 'r') as f:
         return json.load(f)
+
+def load_pick_history(username):
+    """Load pick history for a user from file"""
+    if not os.path.exists(HISTORY_FILE):
+        return []
+    try:
+        with open(HISTORY_FILE, 'r') as f:
+            all_history = json.load(f)
+        return all_history.get(username, [])
+    except:
+        return []
+
+def save_pick_history(username, history):
+    """Save pick history for a user to file"""
+    all_history = {}
+    if os.path.exists(HISTORY_FILE):
+        try:
+            with open(HISTORY_FILE, 'r') as f:
+                all_history = json.load(f)
+        except:
+            pass
+    all_history[username] = history[-DEFAULT_SESSION_LIMIT:]
+    with open(HISTORY_FILE, 'w') as f:
+        json.dump(all_history, f, indent=2)
 
 @app.route('/setup', methods=['GET', 'POST'])
 def setup():
@@ -406,7 +431,7 @@ def index():
         if 'toggle_history' in form:
             session['show_history'] = not session.get('show_history', False)
         elif 'clear_history' in form:
-            session['pick_history'] = []
+            save_pick_history(session.get('username', 'default'), [])
         elif 'add_to_watchlist' in form:
             item = {
                 'title': form.get('saved_title'),
@@ -467,17 +492,20 @@ def index():
             results = [build_item_data(i, machine_id) for i in random.sample(filtered, min(picks, len(filtered)))]
             print(f"Picked {len(results)} result(s): {[r['title'] for r in results]}", flush=True)
 
-            session['current_results'] = results
             if config.get('enable_history', True):
-                history = session.setdefault('pick_history', [])
+                username = session.get('username', 'default')
+                history = load_pick_history(username)
                 history.extend(results)
-                session['pick_history'] = history[-DEFAULT_SESSION_LIMIT:]
+                save_pick_history(username, history)
+
+    # Load history from file for display
+    pick_history = load_pick_history(session.get('username', 'default')) if config.get('enable_history', True) else []
 
     return render_template('index.html',
-                           results=session.get('current_results', []),
+                           results=results,
                            genres=genres,
                            rating_options=RATING_OPTIONS,
-                           pick_history=session.get('pick_history', []),
+                           pick_history=pick_history,
                            show_history=session.get('show_history', False),
                            default_theme=config.get("default_theme", "dark"),
                            config=config)

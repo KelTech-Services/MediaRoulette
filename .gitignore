@@ -2,6 +2,7 @@
 data/config.json
 data/watchlist.json
 data/users.json
+data/pick_history.json
 
 # Python
 __pycache__/
