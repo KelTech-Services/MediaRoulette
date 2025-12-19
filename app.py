@@ -424,7 +424,8 @@ def index():
 
     genres = extract_genres(items)
     form = request.form
-    results = []
+    results = session.get('saved_results', [])  # Restore results from session
+    filters = session.get('filters', {})  # Get saved filters
 
     if request.method == 'POST':
         print(f"POST received. Form keys: {list(form.keys())}", flush=True)
@@ -432,6 +433,10 @@ def index():
             session['show_history'] = not session.get('show_history', False)
         elif 'clear_history' in form:
             save_pick_history(session.get('username', 'default'), [])
+        elif 'reset_filters' in form:
+            # Clear saved filters and results
+            session.pop('filters', None)
+            session.pop('saved_results', None)
         elif 'add_to_watchlist' in form:
             item = {
                 'title': form.get('saved_title'),
@@ -458,6 +463,17 @@ def index():
             unwatched = 'unwatched' in form
             filtered = []
             print(f"media_type={media_type}, unwatched={unwatched}, genre={form.get('genre')}", flush=True)
+
+            # Save filter settings to session
+            session['filters'] = {
+                'media_type': media_type,
+                'genre': form.get('genre', ''),
+                'rating': form.get('rating', ''),
+                'keyword': form.get('keyword', ''),
+                'unwatched': unwatched,
+                'recent_releases': 'recent_releases' in form,
+                'show_three': 'show_three' in form
+            }
 
             if media_type == 'movie' and movie_key:
                 filtered += get_items_from_library(movie_key, unwatched=unwatched)
@@ -506,6 +522,9 @@ def index():
             results = [build_item_data(i, machine_id) for i in random.sample(filtered, min(picks, len(filtered)))]
             print(f"Picked {len(results)} result(s): {[r['title'] for r in results]}", flush=True)
 
+            # Save results to session
+            session['saved_results'] = results
+
             if config.get('enable_history', True):
                 username = session.get('username', 'default')
                 history = load_pick_history(username)
@@ -514,6 +533,9 @@ def index():
 
     # Load history from file for display
     pick_history = load_pick_history(session.get('username', 'default')) if config.get('enable_history', True) else []
+    
+    # Get current filters (may have been updated during POST)
+    filters = session.get('filters', {})
 
     return render_template('index.html',
                            results=results,
@@ -521,6 +543,7 @@ def index():
                            rating_options=RATING_OPTIONS,
                            pick_history=pick_history,
                            show_history=session.get('show_history', False),
+                           filters=filters,
                            default_theme=config.get("default_theme", "dark"),
                            config=config)
 

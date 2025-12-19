@@ -51,9 +51,9 @@
             <div class="form-group">
                 <label for="media_type">Media Type</label>
                 <select name="media_type" id="media_type">
-                    <option value="both" {% if request.form.media_type == 'both' %}selected{% endif %}>Movies & TV Shows</option>
-                    <option value="movie" {% if request.form.media_type == 'movie' %}selected{% endif %}>Movies Only</option>
-                    <option value="show" {% if request.form.media_type == 'show' %}selected{% endif %}>TV Shows Only</option>
+                    <option value="both" {% if filters.media_type == 'both' or not filters.media_type %}selected{% endif %}>Movies & TV Shows</option>
+                    <option value="movie" {% if filters.media_type == 'movie' %}selected{% endif %}>Movies Only</option>
+                    <option value="show" {% if filters.media_type == 'show' %}selected{% endif %}>TV Shows Only</option>
                 </select>
             </div>
             <div class="form-group">
@@ -61,7 +61,7 @@
                 <select name="genre" id="genre">
                     <option value="">All Genres</option>
                     {% for genre in genres %}
-                        <option value="{{ genre }}" {% if request.form.genre == genre %}selected{% endif %}>{{ genre }}</option>
+                        <option value="{{ genre }}" {% if filters.genre == genre %}selected{% endif %}>{{ genre }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -73,20 +73,21 @@
                 <select name="rating" id="rating">
                     <option value="">All Ratings</option>
                     {% for rating in rating_options %}
-                        <option value="{{ rating }}" {% if request.form.rating == rating %}selected{% endif %}>{{ rating }}</option>
+                        <option value="{{ rating }}" {% if filters.rating == rating %}selected{% endif %}>{{ rating }}</option>
                     {% endfor %}
                 </select>
             </div>
             <div class="form-group">
                 <label for="keyword">Keyword</label>
-                <input type="text" name="keyword" id="keyword" placeholder="e.g. survival, comedy" value="{{ request.form.keyword }}">
+                <input type="text" name="keyword" id="keyword" placeholder="e.g. survival, comedy" value="{{ filters.keyword or '' }}">
             </div>
         </div>
 
         <div class="checkbox-row">
-            <label><input type="checkbox" name="unwatched" {% if request.form.unwatched %}checked{% endif %}> Unwatched Only</label>
-            <label><input type="checkbox" name="recent_releases" {% if request.form.recent_releases %}checked{% endif %}> Recent (5 Years)</label>
-            <label><input type="checkbox" name="show_three" {% if request.form.show_three %}checked{% endif %}> Show 3 Results</label>
+            <label><input type="checkbox" name="unwatched" {% if filters.unwatched %}checked{% endif %}> Unwatched Only</label>
+            <label><input type="checkbox" name="recent_releases" {% if filters.recent_releases %}checked{% endif %}> Recent (5 Years)</label>
+            <label><input type="checkbox" name="show_three" {% if filters.show_three %}checked{% endif %}> Show 3 Results</label>
+            <button type="submit" name="reset_filters" value="true" style="width: auto; padding: 8px 16px; background: var(--bg-tertiary); color: var(--text-secondary); border: 1px solid var(--border); font-size: 14px;">↺ Reset Filters</button>
         </div>
 
         <button type="submit" id="spin-btn">🎲 Spin</button>
