@@ -479,6 +479,40 @@ def index():
                            default_theme=config.get("default_theme", "dark"),
                            config=config)
 
+@app.route('/api/server_libraries/<path:server_uri>')
+@login_required
+def get_server_libraries(server_uri):
+    """Fetch libraries for a specific server"""
+    config = load_config()
+    servers = config.get('plex_servers', [])
+    
+    # Find the server by URI
+    selected_server = next((s for s in servers if s['uri'] == server_uri), None)
+    if not selected_server:
+        return jsonify({'error': 'Server not found'}), 404
+    
+    try:
+        print(f"[PlexRoulette] Fetching libraries from server: {server_uri}")
+        lib_response = requests.get(
+            f"{server_uri}/library/sections",
+            headers={'Accept': 'application/json'},
+            params={'X-Plex-Token': selected_server['accessToken']},
+            timeout=15
+        )
+        if lib_response.ok:
+            libraries = lib_response.json().get('MediaContainer', {}).get('Directory', [])
+            print(f"[PlexRoulette] Found {len(libraries)} libraries on {selected_server['name']}")
+            return jsonify({'libraries': libraries})
+        else:
+            print(f"[PlexRoulette] Failed to fetch libraries: {lib_response.status_code}")
+            return jsonify({'error': f'Failed to fetch libraries: {lib_response.status_code}'}), 500
+    except requests.exceptions.Timeout:
+        print(f"[PlexRoulette] Timeout connecting to {server_uri}")
+        return jsonify({'error': 'Connection timed out'}), 504
+    except Exception as e:
+        print(f"[PlexRoulette] Error fetching libraries: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/settings', methods=['GET', 'POST'])
 @login_required
 def settings():
@@ -491,6 +525,22 @@ def settings():
         config['tvshows_library'] = request.form.get('tvshows_library') or None
         config['default_theme'] = request.form.get('default_theme', 'dark')
         config['enable_history'] = 'enable_history' in request.form
+        
+        # Fetch and save libraries for the selected server
+        if selected_server:
+            try:
+                lib_response = requests.get(
+                    f"{selected_server['uri']}/library/sections",
+                    headers={'Accept': 'application/json'},
+                    params={'X-Plex-Token': selected_server['accessToken']},
+                    timeout=15
+                )
+                if lib_response.ok:
+                    config['plex_libraries'] = lib_response.json().get('MediaContainer', {}).get('Directory', [])
+                    print(f"[PlexRoulette] Saved {len(config['plex_libraries'])} libraries for {selected_server['name']}")
+            except Exception as e:
+                print(f"[PlexRoulette] Failed to fetch libraries on save: {e}")
+        
         save_config(config)
 
         session['plex_token'] = config.get('plex_token')

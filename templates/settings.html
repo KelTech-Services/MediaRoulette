@@ -185,6 +185,57 @@
         if (toggleBtn) toggleBtn.innerText = selectedTheme === 'dark' ? '☀️' : '🌙';
     }
 
+    async function onServerChange() {
+        const serverSelect = document.getElementById('plex_server_url');
+        const moviesSelect = document.getElementById('movies_library');
+        const tvSelect = document.getElementById('tvshows_library');
+        const serverUri = serverSelect.value;
+
+        // Show loading state
+        moviesSelect.innerHTML = '<option value="">Loading...</option>';
+        tvSelect.innerHTML = '<option value="">Loading...</option>';
+        moviesSelect.disabled = true;
+        tvSelect.disabled = true;
+
+        try {
+            const response = await fetch('/api/server_libraries/' + encodeURIComponent(serverUri));
+            const data = await response.json();
+
+            if (data.error) {
+                moviesSelect.innerHTML = '<option value="">Error loading libraries</option>';
+                tvSelect.innerHTML = '<option value="">Error loading libraries</option>';
+                console.error('Error fetching libraries:', data.error);
+                return;
+            }
+
+            // Populate movies dropdown
+            moviesSelect.innerHTML = '<option value="">None</option>';
+            data.libraries.forEach(lib => {
+                const option = document.createElement('option');
+                option.value = lib.title;
+                option.textContent = lib.title;
+                moviesSelect.appendChild(option);
+            });
+
+            // Populate TV shows dropdown
+            tvSelect.innerHTML = '<option value="">None</option>';
+            data.libraries.forEach(lib => {
+                const option = document.createElement('option');
+                option.value = lib.title;
+                option.textContent = lib.title;
+                tvSelect.appendChild(option);
+            });
+
+        } catch (e) {
+            console.error('Failed to fetch libraries:', e);
+            moviesSelect.innerHTML = '<option value="">Error loading libraries</option>';
+            tvSelect.innerHTML = '<option value="">Error loading libraries</option>';
+        } finally {
+            moviesSelect.disabled = false;
+            tvSelect.disabled = false;
+        }
+    }
+
     window.onload = () => {
         const savedTheme = localStorage.getItem('theme') || '{{ default_theme }}';
         document.documentElement.classList.remove('dark', 'light');
@@ -193,6 +244,12 @@
         const dropdown = document.getElementById('default_theme');
         if (toggleBtn) toggleBtn.innerText = savedTheme === 'dark' ? '☀️' : '🌙';
         if (dropdown) dropdown.value = savedTheme;
+
+        // Add change listener to server dropdown
+        const serverSelect = document.getElementById('plex_server_url');
+        if (serverSelect) {
+            serverSelect.addEventListener('change', onServerChange);
+        }
     };
 </script>
 </body>
