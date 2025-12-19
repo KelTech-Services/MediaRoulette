@@ -9,6 +9,11 @@
 </p>
 
 <p align="center">
+  <a href="https://discord.gg/hHvgWNnegq"><img src="https://img.shields.io/badge/Discord-Join%20Server-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
+  <a href="https://github.com/KelTech-Services/MediaRoulette/releases"><img src="https://img.shields.io/github/v/release/KelTech-Services/MediaRoulette?color=green" alt="Release"></a>
+</p>
+
+<p align="center">
   A web app that randomly selects from your <strong>Movies, TV Shows, or both</strong> based on your preferences.<br>
   Great for large libraries where scrolling becomes overwhelming.
 </p>
