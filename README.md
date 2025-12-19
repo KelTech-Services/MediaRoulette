@@ -1,11 +1,11 @@
-# PlexRoulette
+# MediaRoulette
 
 <p align="center">
-  <img src="static/img/logo.png" alt="PlexRoulette Logo" width="200">
+  <img src="static/img/logo.png" alt="MediaRoulette Logo" width="200">
 </p>
 
 <p align="center">
-  <strong>Can't decide what to watch? Let PlexRoulette pick for you!</strong>
+  <strong>MediaRoulette for Plex — Can't decide what to watch? Let MediaRoulette pick for you!</strong>
 </p>
 
 <p align="center">
@@ -40,12 +40,12 @@
 
 ```bash
 docker run -d \
-  --name plexroulette \
+  --name mediaroulette \
   -p 5000:5000 \
-  -v plexroulette-data:/app/data \
+  -v mediaroulette-data:/app/data \
   -e SECRET_KEY=your-secret-key-here \
   --restart unless-stopped \
-  ghcr.io/keltech-services/plexroulette:latest
+  ghcr.io/keltech-services/mediaroulette:latest
 ```
 
 Then open **http://localhost:5000** in your browser.
@@ -58,19 +58,19 @@ Create a `docker-compose.yml` file:
 version: '3.8'
 
 services:
-  plexroulette:
-    image: ghcr.io/keltech-services/plexroulette:latest
-    container_name: plexroulette
+  mediaroulette:
+    image: ghcr.io/keltech-services/mediaroulette:latest
+    container_name: mediaroulette
     ports:
       - "5000:5000"
     volumes:
-      - plexroulette-data:/app/data
+      - mediaroulette-data:/app/data
     environment:
       - SECRET_KEY=your-secret-key-here
     restart: unless-stopped
 
 volumes:
-  plexroulette-data:
+  mediaroulette-data:
 ```
 
 Then run:
@@ -87,7 +87,7 @@ docker-compose up -d
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `SECRET_KEY` | Flask session encryption key (see below) | `plexroulette-dev-key-change-in-prod` |
+| `SECRET_KEY` | Flask session encryption key (see below) | `mediaroulette-dev-key-change-in-prod` |
 | `PORT` | Port to run the application | `5000` |
 
 ### Generating a Secret Key
@@ -117,7 +117,7 @@ Mount this directory as a volume to persist data between container restarts.
 ## How to Use
 
 ### 1. Sign In
-Open PlexRoulette in your browser and click **Sign in with Plex**. You'll receive a code to enter at [plex.tv/link](https://plex.tv/link).
+Open MediaRoulette in your browser and click **Sign in with Plex**. You'll receive a code to enter at [plex.tv/link](https://plex.tv/link).
 
 ### 2. Configure Libraries
 After signing in, go to **Settings** and select your Plex server and libraries (Movies and/or TV Shows).
@@ -141,8 +141,8 @@ Found something interesting? Click **Add to Watchlist** to save it for later. Ac
 
 ```bash
 # Clone the repository
-git clone https://github.com/KelTech-Services/PlexRoulette.git
-cd PlexRoulette
+git clone https://github.com/KelTech-Services/MediaRoulette.git
+cd MediaRoulette
 
 # Create a virtual environment (optional but recommended)
 python3 -m venv venv
@@ -160,8 +160,8 @@ Open **http://localhost:5000** in your browser.
 ### Build Docker Image Locally
 
 ```bash
-docker build -t plexroulette .
-docker run -d -p 5000:5000 -v plexroulette-data:/app/data plexroulette
+docker build -t mediaroulette .
+docker run -d -p 5000:5000 -v mediaroulette-data:/app/data mediaroulette
 ```
 
 ---

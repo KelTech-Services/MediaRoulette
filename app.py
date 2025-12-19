@@ -18,17 +18,17 @@ WATCHLIST_FILE = os.path.join(DATA_DIR, 'watchlist.json')
 USERS_FILE = os.path.join(DATA_DIR, 'users.json')
 HISTORY_FILE = os.path.join(DATA_DIR, 'pick_history.json')
 
-PLEX_PRODUCT = "PlexRouletteApp"
-PLEX_CLIENT_IDENTIFIER = "plexroulette-client-001"
+PLEX_PRODUCT = "MediaRouletteApp"
+PLEX_CLIENT_IDENTIFIER = "mediaroulette-client-001"
 PLEX_PLATFORM = "Web"
-PLEX_DEVICE_NAME = "PlexRoulette"
+PLEX_DEVICE_NAME = "MediaRoulette"
 PLEX_DEVICE = "PythonApp"
 PLEX_VERSION = "1.0"
 
 DEFAULT_SESSION_LIMIT = 20
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'plexroulette-dev-key-change-in-prod')
+app.secret_key = os.environ.get('SECRET_KEY', 'mediaroulette-dev-key-change-in-prod')
 
 # Ensure data directory and files exist
 os.makedirs(DATA_DIR, exist_ok=True)
@@ -257,7 +257,7 @@ def plex_poll():
                     uri = conn.attrib.get('uri')
                     if uri:
                         selected_uri = uri
-                        print(f"[PlexRoulette] Selected connection for {name}: {uri} (local={conn.attrib.get('local')})")
+                        print(f"[MediaRoulette] Selected connection for {name}: {uri} (local={conn.attrib.get('local')})")
                         break
                 
                 if selected_uri:
@@ -267,11 +267,11 @@ def plex_poll():
                         'accessToken': accessToken
                     })
         except Exception as e:
-            print(f"[PlexRoulette] Failed to fetch servers: {e}")
+            print(f"[MediaRoulette] Failed to fetch servers: {e}")
         config['plex_servers'] = servers
         if servers:
             config['plex_server_url'] = servers[0]['uri']
-            print(f"[PlexRoulette] Fetching libraries from: {servers[0]['uri']}")
+            print(f"[MediaRoulette] Fetching libraries from: {servers[0]['uri']}")
             # Fetch libraries from the first server
             try:
                 lib_response = requests.get(
@@ -282,13 +282,13 @@ def plex_poll():
                 )
                 if lib_response.ok:
                     config['plex_libraries'] = lib_response.json().get('MediaContainer', {}).get('Directory', [])
-                    print(f"[PlexRoulette] Found {len(config['plex_libraries'])} libraries")
+                    print(f"[MediaRoulette] Found {len(config['plex_libraries'])} libraries")
                 else:
-                    print(f"[PlexRoulette] Library fetch failed with status: {lib_response.status_code}")
+                    print(f"[MediaRoulette] Library fetch failed with status: {lib_response.status_code}")
             except requests.exceptions.Timeout:
-                print(f"[PlexRoulette] Timeout connecting to Plex server at {servers[0]['uri']}")
+                print(f"[MediaRoulette] Timeout connecting to Plex server at {servers[0]['uri']}")
             except Exception as e:
-                print(f"[PlexRoulette] Failed to fetch libraries: {e}")
+                print(f"[MediaRoulette] Failed to fetch libraries: {e}")
         save_config(config)
         return jsonify({'status': 'success'})
     return jsonify({'status': 'pending'})
@@ -523,7 +523,7 @@ def get_server_libraries(server_uri):
         return jsonify({'error': 'Server not found'}), 404
     
     try:
-        print(f"[PlexRoulette] Fetching libraries from server: {server_uri}")
+        print(f"[MediaRoulette] Fetching libraries from server: {server_uri}")
         lib_response = requests.get(
             f"{server_uri}/library/sections",
             headers={'Accept': 'application/json'},
@@ -532,16 +532,16 @@ def get_server_libraries(server_uri):
         )
         if lib_response.ok:
             libraries = lib_response.json().get('MediaContainer', {}).get('Directory', [])
-            print(f"[PlexRoulette] Found {len(libraries)} libraries on {selected_server['name']}")
+            print(f"[MediaRoulette] Found {len(libraries)} libraries on {selected_server['name']}")
             return jsonify({'libraries': libraries})
         else:
-            print(f"[PlexRoulette] Failed to fetch libraries: {lib_response.status_code}")
+            print(f"[MediaRoulette] Failed to fetch libraries: {lib_response.status_code}")
             return jsonify({'error': f'Failed to fetch libraries: {lib_response.status_code}'}), 500
     except requests.exceptions.Timeout:
-        print(f"[PlexRoulette] Timeout connecting to {server_uri}")
+        print(f"[MediaRoulette] Timeout connecting to {server_uri}")
         return jsonify({'error': 'Connection timed out'}), 504
     except Exception as e:
-        print(f"[PlexRoulette] Error fetching libraries: {e}")
+        print(f"[MediaRoulette] Error fetching libraries: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/settings', methods=['GET', 'POST'])
@@ -568,9 +568,9 @@ def settings():
                 )
                 if lib_response.ok:
                     config['plex_libraries'] = lib_response.json().get('MediaContainer', {}).get('Directory', [])
-                    print(f"[PlexRoulette] Saved {len(config['plex_libraries'])} libraries for {selected_server['name']}")
+                    print(f"[MediaRoulette] Saved {len(config['plex_libraries'])} libraries for {selected_server['name']}")
             except Exception as e:
-                print(f"[PlexRoulette] Failed to fetch libraries on save: {e}")
+                print(f"[MediaRoulette] Failed to fetch libraries on save: {e}")
         
         save_config(config)
 

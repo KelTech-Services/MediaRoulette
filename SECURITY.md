@@ -2,14 +2,14 @@
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability in PlexRoulette, please report it responsibly.
+If you discover a security vulnerability in MediaRoulette, please report it responsibly.
 
 **Do NOT open a public GitHub issue for security vulnerabilities.**
 
 ### Preferred Methods
 
 1. **GitHub Private Vulnerability Reporting** (recommended)  
-   Use the "Report a vulnerability" button in the [Security tab](https://github.com/KelTech-Services/PlexRoulette/security/advisories/new)
+   Use the "Report a vulnerability" button in the [Security tab](https://github.com/KelTech-Services/MediaRoulette/security/advisories/new)
 
 2. **Email**  
    Send details to: dev_security@keltech.services
@@ -36,5 +36,5 @@ If you discover a security vulnerability in PlexRoulette, please report it respo
 ## Security Best Practices for Users
 
 - Always set a strong, unique `SECRET_KEY` environment variable
-- Use HTTPS when exposing PlexRoulette outside your local network
+- Use HTTPS when exposing MediaRoulette outside your local network
 - Keep your Docker images updated to the latest version
