@@ -489,30 +489,32 @@ button[style*="background-color: #d9534f"]:hover {
 }
 
 /* Media Type Badge */
+.result-card {
+    position: relative;
+}
+
 .media-type-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 4px 12px;
-    border-radius: 16px;
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin: 12px 0 8px 0;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: default;
 }
 
 .media-type-badge img {
-    width: 20px;
-    height: 20px;
+    width: 32px;
+    height: 32px;
 }
 
 .media-type-badge.movie {
     background: linear-gradient(135deg, #e5a00d, #cc8800);
-    color: #000;
 }
 
 .media-type-badge.tvshow {
     background: linear-gradient(135deg, #cc3333, #aa2222);
-    color: #fff;
 }

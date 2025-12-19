@@ -101,9 +101,8 @@
         {% if result.poster %}
             <img src="{{ result.poster }}" alt="Poster" class="poster">
         {% endif %}
-        <span class="media-type-badge {{ 'movie' if result.media_type == 'Movie' else 'tvshow' }}">
-            <img src="{{ url_for('static', filename='img/' + ('movie-badge.svg' if result.media_type == 'Movie' else 'tvshow-badge.svg')) }}" alt="">
-            {{ result.media_type }}
+        <span class="media-type-badge {{ 'movie' if result.media_type == 'Movie' else 'tvshow' }}" title="{{ result.media_type }}">
+            <img src="{{ url_for('static', filename='img/' + ('movie-badge.svg' if result.media_type == 'Movie' else 'tvshow-badge.svg')) }}" alt="{{ result.media_type }}">
         </span>
         <h2>{{ result.title }} ({{ result.year }})</h2>
         {% if result.runtime and result.runtime != 'N/A' %}
@@ -153,9 +152,8 @@
                 {% if item.poster %}
                     <img src="{{ item.poster }}" alt="Poster" class="poster">
                 {% endif %}
-                <span class="media-type-badge {{ 'movie' if item.media_type == 'Movie' else 'tvshow' }}">
-                    <img src="{{ url_for('static', filename='img/' + ('movie-badge.svg' if item.media_type == 'Movie' else 'tvshow-badge.svg')) }}" alt="">
-                    {{ item.media_type or 'Movie' }}
+                <span class="media-type-badge {{ 'movie' if item.media_type == 'Movie' else 'tvshow' }}" title="{{ item.media_type or 'Movie' }}">
+                    <img src="{{ url_for('static', filename='img/' + ('movie-badge.svg' if item.media_type == 'Movie' else 'tvshow-badge.svg')) }}" alt="{{ item.media_type or 'Movie' }}">
                 </span>
                 <h2>{{ item.title }} ({{ item.year }})</h2>
                 {% if item.runtime and item.runtime != 'N/A' %}
