@@ -46,7 +46,7 @@
 
     {% if config.get('plex_token') %}
 
-    <form method="POST">
+    <form method="POST" id="spin-form">
         <div class="form-row">
             <div class="form-group">
                 <label for="media_type">Media Type</label>
@@ -89,7 +89,7 @@
             <label><input type="checkbox" name="show_three" {% if request.form.show_three %}checked{% endif %}> Show 3 Results</label>
         </div>
 
-        <button type="submit">🎲 Spin</button>
+        <button type="submit" id="spin-btn">🎲 Spin</button>
     </form>
 
     {% if results is not none and results|length == 0 %}
@@ -191,5 +191,21 @@
     {% endif %}
 
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const spinForm = document.getElementById('spin-form');
+    const spinBtn = document.getElementById('spin-btn');
+    
+    if (spinForm && spinBtn) {
+        spinForm.addEventListener('submit', function() {
+            spinBtn.disabled = true;
+            spinBtn.innerHTML = '🎲 Spinning...';
+            spinBtn.style.opacity = '0.6';
+            spinBtn.style.cursor = 'not-allowed';
+        });
+    }
+});
+</script>
 </body>
 </html>
