@@ -29,7 +29,7 @@
 
 | Picker | Watchlist | Settings |
 |--------|-----------|----------|
-| Filter and spin to get random picks | Save titles for later | Configure your libraries |
+| ![Picker](screenshots/Picker.png) | ![Watchlist](screenshots/Watchlist.png) | ![Settings](screenshots/Settings.png) |
 
 ---
 
