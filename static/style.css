@@ -111,7 +111,8 @@ html.light select option {
 }
 
 .logo-container img {
-    height: 160px;
+    height: 200px;
+    max-width: 90%;
     margin-bottom: 8px;
 }
 
@@ -463,7 +464,7 @@ button[style*="background-color: #d9534f"]:hover {
     }
 
     .logo-container img {
-        height: 120px;
+        height: 150px;
     }
 
     .result-card {
