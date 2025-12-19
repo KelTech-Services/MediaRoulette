@@ -216,32 +216,54 @@ def plex_poll():
             }, timeout=10)
             root = ElementTree.fromstring(server_response.text)
             for device in root.findall('Device'):
+                if device.attrib.get('provides') != 'server':
+                    continue
                 name = device.attrib.get('name')
                 accessToken = device.attrib.get('accessToken')
-                for conn in device.findall('Connection'):
-                    if conn.attrib.get('local') == "0" and conn.attrib.get('uri', '').startswith("https://"):
-                        servers.append({
-                            'name': name,
-                            'uri': conn.attrib.get('uri'),
-                            'accessToken': accessToken
-                        })
+                connections = device.findall('Connection')
+                
+                # Collect all connections, preferring local
+                local_conns = [c for c in connections if c.attrib.get('local') == '1']
+                remote_conns = [c for c in connections if c.attrib.get('local') == '0']
+                
+                # Try local first, then remote
+                selected_uri = None
+                for conn in local_conns + remote_conns:
+                    uri = conn.attrib.get('uri')
+                    if uri:
+                        selected_uri = uri
+                        print(f"[PlexRoulette] Selected connection for {name}: {uri} (local={conn.attrib.get('local')})")
                         break
+                
+                if selected_uri:
+                    servers.append({
+                        'name': name,
+                        'uri': selected_uri,
+                        'accessToken': accessToken
+                    })
         except Exception as e:
-            print(f"Failed to fetch servers: {e}")
+            print(f"[PlexRoulette] Failed to fetch servers: {e}")
         config['plex_servers'] = servers
         if servers:
             config['plex_server_url'] = servers[0]['uri']
+            print(f"[PlexRoulette] Fetching libraries from: {servers[0]['uri']}")
             # Fetch libraries from the first server
             try:
                 lib_response = requests.get(
                     f"{servers[0]['uri']}/library/sections",
                     headers={'Accept': 'application/json'},
-                    params={'X-Plex-Token': servers[0]['accessToken']}
+                    params={'X-Plex-Token': servers[0]['accessToken']},
+                    timeout=15
                 )
                 if lib_response.ok:
                     config['plex_libraries'] = lib_response.json().get('MediaContainer', {}).get('Directory', [])
+                    print(f"[PlexRoulette] Found {len(config['plex_libraries'])} libraries")
+                else:
+                    print(f"[PlexRoulette] Library fetch failed with status: {lib_response.status_code}")
+            except requests.exceptions.Timeout:
+                print(f"[PlexRoulette] Timeout connecting to Plex server at {servers[0]['uri']}")
             except Exception as e:
-                print(f"Failed to fetch libraries: {e}")
+                print(f"[PlexRoulette] Failed to fetch libraries: {e}")
         save_config(config)
         return jsonify({'status': 'success'})
     return jsonify({'status': 'pending'})
