@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  A web app that randomly selects <strong>movies and TV shows</strong> from your Plex library based on your preferences.<br>
+  A web app that randomly selects <strong>Movies and TV shows</strong> from your Plex library based on your preferences.<br>
   Great for large libraries where scrolling becomes overwhelming.
 </p>
 
