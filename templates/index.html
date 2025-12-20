@@ -51,9 +51,15 @@
             <div class="form-group">
                 <label for="media_type">Media Type</label>
                 <select name="media_type" id="media_type">
+                    {% if has_movies and has_tvshows %}
                     <option value="both" {% if filters.media_type == 'both' or not filters.media_type %}selected{% endif %}>Movies & TV Shows</option>
-                    <option value="movie" {% if filters.media_type == 'movie' %}selected{% endif %}>Movies Only</option>
-                    <option value="show" {% if filters.media_type == 'show' %}selected{% endif %}>TV Shows Only</option>
+                    {% endif %}
+                    {% if has_movies %}
+                    <option value="movie" {% if filters.media_type == 'movie' or (has_movies and not has_tvshows) %}selected{% endif %}>Movies Only</option>
+                    {% endif %}
+                    {% if has_tvshows %}
+                    <option value="show" {% if filters.media_type == 'show' or (has_tvshows and not has_movies) %}selected{% endif %}>TV Shows Only</option>
+                    {% endif %}
                 </select>
             </div>
             <div class="form-group">

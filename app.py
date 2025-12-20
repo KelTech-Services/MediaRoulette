@@ -544,6 +544,8 @@ def index():
                            pick_history=pick_history,
                            show_history=session.get('show_history', False),
                            filters=filters,
+                           has_movies=bool(movie_key),
+                           has_tvshows=bool(show_key),
                            default_theme=config.get("default_theme", "dark"),
                            config=config)
 
