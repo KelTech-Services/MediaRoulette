@@ -581,7 +581,7 @@ def get_server_libraries(server_uri):
         return jsonify({'error': 'Connection timed out'}), 504
     except Exception as e:
         print(f"[MediaRoulette] Error fetching libraries: {e}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'An unexpected error occurred'}), 500
 
 @app.route('/settings', methods=['GET', 'POST'])
 @login_required
