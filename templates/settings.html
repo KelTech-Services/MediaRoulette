@@ -10,6 +10,74 @@
         const savedTheme = localStorage.getItem('theme') || '{{ default_theme }}';
         document.documentElement.classList.add(savedTheme);
     </script>
+    <style>
+        .checkbox-dropdown {
+            position: relative;
+            width: 100%;
+        }
+        .checkbox-dropdown-toggle {
+            width: 100%;
+            padding: 12px 14px;
+            font-size: 15px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            cursor: pointer;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .checkbox-dropdown-toggle:hover {
+            border-color: var(--accent);
+        }
+        .checkbox-dropdown-toggle::after {
+            content: '▼';
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+        .checkbox-dropdown.open .checkbox-dropdown-toggle::after {
+            content: '▲';
+        }
+        .checkbox-dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-top: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 100;
+        }
+        .checkbox-dropdown.open .checkbox-dropdown-menu {
+            display: block;
+        }
+        .checkbox-dropdown-item {
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            color: var(--text-primary);
+        }
+        .checkbox-dropdown-item:hover {
+            background: var(--bg-secondary);
+        }
+        .checkbox-dropdown-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+        .checkbox-dropdown-item label {
+            cursor: pointer;
+            flex: 1;
+        }
+    </style>
 </head>
 <body>
 <div class="container">
@@ -58,33 +126,51 @@
 
         <div class="form-row">
             <div class="form-group">
-                <label for="movies_library">
-                    Movies Library
+                <label>
+                    Movie Libraries
                     <span class="tooltip">❓
-                        <span class="tooltiptext">Select the library containing your movies. Choose "None" to exclude movies from results.</span>
+                        <span class="tooltiptext">Select one or more libraries containing your movies. Leave unselected to exclude movies from results.</span>
                     </span>
                 </label>
-                <select id="movies_library" name="movies_library">
-                    <option value="" {% if not config.movies_library %}selected{% endif %}>None</option>
-                    {% for lib in libraries %}
-                        <option value="{{ lib.title }}" {% if config.movies_library == lib.title %}selected{% endif %}>{{ lib.title }}</option>
-                    {% endfor %}
-                </select>
+                <div class="checkbox-dropdown" id="movies-dropdown">
+                    <button type="button" class="checkbox-dropdown-toggle" onclick="toggleDropdown('movies-dropdown')">
+                        <span class="selected-text">Select libraries...</span>
+                    </button>
+                    <div class="checkbox-dropdown-menu">
+                        {% for lib in libraries %}
+                        <div class="checkbox-dropdown-item">
+                            <input type="checkbox" name="movies_library" value="{{ lib.title }}" id="movies_{{ loop.index }}"
+                                {% if lib.title in config.get('movies_libraries', []) or (not config.get('movies_libraries') and config.movies_library == lib.title) %}checked{% endif %}
+                                onchange="updateDropdownText('movies-dropdown')">
+                            <label for="movies_{{ loop.index }}">{{ lib.title }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
 
             <div class="form-group">
-                <label for="tvshows_library">
-                    TV Shows Library
+                <label>
+                    TV Show Libraries
                     <span class="tooltip">❓
-                        <span class="tooltiptext">Select the library containing your TV shows. Choose "None" to exclude TV shows from results.</span>
+                        <span class="tooltiptext">Select one or more libraries containing your TV shows. Leave unselected to exclude TV shows from results.</span>
                     </span>
                 </label>
-                <select id="tvshows_library" name="tvshows_library">
-                    <option value="" {% if not config.tvshows_library %}selected{% endif %}>None</option>
-                    {% for lib in libraries %}
-                        <option value="{{ lib.title }}" {% if config.tvshows_library == lib.title %}selected{% endif %}>{{ lib.title }}</option>
-                    {% endfor %}
-                </select>
+                <div class="checkbox-dropdown" id="tvshows-dropdown">
+                    <button type="button" class="checkbox-dropdown-toggle" onclick="toggleDropdown('tvshows-dropdown')">
+                        <span class="selected-text">Select libraries...</span>
+                    </button>
+                    <div class="checkbox-dropdown-menu">
+                        {% for lib in libraries %}
+                        <div class="checkbox-dropdown-item">
+                            <input type="checkbox" name="tvshows_library" value="{{ lib.title }}" id="tvshows_{{ loop.index }}"
+                                {% if lib.title in config.get('tvshows_libraries', []) or (not config.get('tvshows_libraries') and config.tvshows_library == lib.title) %}checked{% endif %}
+                                onchange="updateDropdownText('tvshows-dropdown')">
+                            <label for="tvshows_{{ loop.index }}">{{ lib.title }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -125,13 +211,10 @@
     <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border);">
         <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
             <form method="POST" action="{{ url_for('reset_password') }}" onsubmit="return confirm('Are you sure? This will delete your admin account and require you to create a new one.');">
-                <button type="submit" style="background: #cc7700; border: none; width: auto; padding: 12px 24px;">
+                <button type="submit" title="This deletes your admin account entirely. You will need to create a new username and password on the next page load." style="background: #cc7700; border: none; width: auto; padding: 12px 24px;">
                     🔑 Reset Password
                 </button>
             </form>
-            <span class="tooltip" style="cursor: help;">❓
-                <span class="tooltiptext">This deletes your admin account entirely. You will need to create a new username and password on the next page load.</span>
-            </span>
             <form method="GET" action="{{ url_for('signout') }}">
                 <button type="submit" style="background: #cc3333; border: none; width: auto; padding: 12px 24px;">
                     🔌 Disconnect Plex
@@ -154,8 +237,8 @@
         </p>
         
         <p style="margin-bottom: 12px; color: var(--text-secondary); line-height: 1.6;">
-            <strong style="color: var(--text-primary);">Movies Library / TV Shows Library:</strong> 
-            Choose the specific libraries from your Plex server. If you only have one type of media, set the other to "None."
+            <strong style="color: var(--text-primary);">Movie Libraries / TV Show Libraries:</strong> 
+            Select one or more libraries from your Plex server using the checkbox dropdowns. Leave a category unselected to exclude that media type from results.
         </p>
         
         <p style="margin-bottom: 12px; color: var(--text-secondary); line-height: 1.6;">
@@ -163,15 +246,49 @@
             Select your preferred appearance. This setting is saved and will persist across sessions.
         </p>
         
-        <p style="margin-bottom: 0; color: var(--text-secondary); line-height: 1.6;">
+        <p style="margin-bottom: 12px; color: var(--text-secondary); line-height: 1.6;">
             <strong style="color: var(--text-primary);">Session History:</strong> 
             When enabled, MediaRoulette keeps track of your last 20 picks. You can view or clear your history from the main picker page.
+        </p>
+        
+        <p style="margin-bottom: 0; color: var(--text-secondary); line-height: 1.6;">
+            <strong style="color: var(--text-primary);">Reset Password:</strong> 
+            This deletes your admin account entirely. You will need to create a new username and password, and reconnect to Plex on the next page load.
         </p>
     </section>
 
 </div>
 
 <script>
+    function toggleDropdown(dropdownId) {
+        const dropdown = document.getElementById(dropdownId);
+        // Close other dropdowns
+        document.querySelectorAll('.checkbox-dropdown.open').forEach(d => {
+            if (d.id !== dropdownId) d.classList.remove('open');
+        });
+        dropdown.classList.toggle('open');
+    }
+
+    function updateDropdownText(dropdownId) {
+        const dropdown = document.getElementById(dropdownId);
+        const checkboxes = dropdown.querySelectorAll('input[type="checkbox"]:checked');
+        const textSpan = dropdown.querySelector('.selected-text');
+        if (checkboxes.length === 0) {
+            textSpan.textContent = 'Select libraries...';
+        } else if (checkboxes.length === 1) {
+            textSpan.textContent = checkboxes[0].nextElementSibling.textContent;
+        } else {
+            textSpan.textContent = checkboxes.length + ' libraries selected';
+        }
+    }
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.checkbox-dropdown')) {
+            document.querySelectorAll('.checkbox-dropdown.open').forEach(d => d.classList.remove('open'));
+        }
+    });
+
     function toggleTheme() {
         const html = document.documentElement;
         const toggleBtn = document.getElementById('theme-toggle');
@@ -194,53 +311,58 @@
     }
 
     async function onServerChange() {
-        const serverSelect = document.getElementById('plex_server_url');
-        const moviesSelect = document.getElementById('movies_library');
-        const tvSelect = document.getElementById('tvshows_library');
-        const serverUri = serverSelect.value;
+        const serverUri = document.getElementById('plex_server_url').value;
+        const moviesMenu = document.querySelector('#movies-dropdown .checkbox-dropdown-menu');
+        const tvMenu = document.querySelector('#tvshows-dropdown .checkbox-dropdown-menu');
 
         // Show loading state
-        moviesSelect.innerHTML = '<option value="">Loading...</option>';
-        tvSelect.innerHTML = '<option value="">Loading...</option>';
-        moviesSelect.disabled = true;
-        tvSelect.disabled = true;
+        moviesMenu.innerHTML = '<div class="checkbox-dropdown-item">Loading...</div>';
+        tvMenu.innerHTML = '<div class="checkbox-dropdown-item">Loading...</div>';
+        updateDropdownText('movies-dropdown');
+        updateDropdownText('tvshows-dropdown');
 
         try {
             const response = await fetch('/api/server_libraries/' + encodeURIComponent(serverUri));
             const data = await response.json();
 
             if (data.error) {
-                moviesSelect.innerHTML = '<option value="">Error loading libraries</option>';
-                tvSelect.innerHTML = '<option value="">Error loading libraries</option>';
+                moviesMenu.innerHTML = '<div class="checkbox-dropdown-item">Error loading libraries</div>';
+                tvMenu.innerHTML = '<div class="checkbox-dropdown-item">Error loading libraries</div>';
                 console.error('Error fetching libraries:', data.error);
                 return;
             }
 
             // Populate movies dropdown
-            moviesSelect.innerHTML = '<option value="">None</option>';
-            data.libraries.forEach(lib => {
-                const option = document.createElement('option');
-                option.value = lib.title;
-                option.textContent = lib.title;
-                moviesSelect.appendChild(option);
+            moviesMenu.innerHTML = '';
+            data.libraries.forEach((lib, index) => {
+                const item = document.createElement('div');
+                item.className = 'checkbox-dropdown-item';
+                item.innerHTML = `
+                    <input type="checkbox" name="movies_library" value="${lib.title}" id="movies_new_${index}" onchange="updateDropdownText('movies-dropdown')">
+                    <label for="movies_new_${index}">${lib.title}</label>
+                `;
+                moviesMenu.appendChild(item);
             });
 
             // Populate TV shows dropdown
-            tvSelect.innerHTML = '<option value="">None</option>';
-            data.libraries.forEach(lib => {
-                const option = document.createElement('option');
-                option.value = lib.title;
-                option.textContent = lib.title;
-                tvSelect.appendChild(option);
+            tvMenu.innerHTML = '';
+            data.libraries.forEach((lib, index) => {
+                const item = document.createElement('div');
+                item.className = 'checkbox-dropdown-item';
+                item.innerHTML = `
+                    <input type="checkbox" name="tvshows_library" value="${lib.title}" id="tvshows_new_${index}" onchange="updateDropdownText('tvshows-dropdown')">
+                    <label for="tvshows_new_${index}">${lib.title}</label>
+                `;
+                tvMenu.appendChild(item);
             });
+
+            updateDropdownText('movies-dropdown');
+            updateDropdownText('tvshows-dropdown');
 
         } catch (e) {
             console.error('Failed to fetch libraries:', e);
-            moviesSelect.innerHTML = '<option value="">Error loading libraries</option>';
-            tvSelect.innerHTML = '<option value="">Error loading libraries</option>';
-        } finally {
-            moviesSelect.disabled = false;
-            tvSelect.disabled = false;
+            moviesMenu.innerHTML = '<div class="checkbox-dropdown-item">Error loading libraries</div>';
+            tvMenu.innerHTML = '<div class="checkbox-dropdown-item">Error loading libraries</div>';
         }
     }
 
@@ -252,6 +374,10 @@
         const dropdown = document.getElementById('default_theme');
         if (toggleBtn) toggleBtn.innerText = savedTheme === 'dark' ? '☀️' : '🌙';
         if (dropdown) dropdown.value = savedTheme;
+
+        // Initialize checkbox dropdown text
+        updateDropdownText('movies-dropdown');
+        updateDropdownText('tvshows-dropdown');
 
         // Add change listener to server dropdown
         const serverSelect = document.getElementById('plex_server_url');

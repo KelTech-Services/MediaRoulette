@@ -338,6 +338,19 @@ def get_library_key(name):
     libs = config.get('plex_libraries', [])
     return next((lib['key'] for lib in libs if lib['title'] == name), None)
 
+def get_library_keys(names):
+    """Get library keys for multiple library names"""
+    if not names:
+        return []
+    config = load_config()
+    libs = config.get('plex_libraries', [])
+    keys = []
+    for name in names:
+        key = next((lib['key'] for lib in libs if lib['title'] == name), None)
+        if key:
+            keys.append(key)
+    return keys
+
 def get_items_from_library(key, unwatched=False):
     if not key:
         return []
@@ -420,18 +433,28 @@ def index():
     if not session.get("plex_token") or not session.get("plex_server_url"):
         return redirect(url_for('plex_login'))
 
-    if not config.get("movies_library") and not config.get("tvshows_library"):
+    # Support both old single-value and new multi-value config
+    movies_libraries = config.get('movies_libraries', [])
+    tvshows_libraries = config.get('tvshows_libraries', [])
+    
+    # Backward compatibility: if no arrays but old single values exist, use those
+    if not movies_libraries and config.get('movies_library'):
+        movies_libraries = [config.get('movies_library')]
+    if not tvshows_libraries and config.get('tvshows_library'):
+        tvshows_libraries = [config.get('tvshows_library')]
+    
+    if not movies_libraries and not tvshows_libraries:
         return redirect(url_for('settings'))
 
-    movie_key = get_library_key(config.get("movies_library"))
-    show_key = get_library_key(config.get("tvshows_library"))
+    movie_keys = get_library_keys(movies_libraries)
+    show_keys = get_library_keys(tvshows_libraries)
     machine_id = get_machine_identifier()
     items = []
 
-    if movie_key:
-        items += get_items_from_library(movie_key)
-    if show_key:
-        items += get_items_from_library(show_key)
+    for key in movie_keys:
+        items += get_items_from_library(key)
+    for key in show_keys:
+        items += get_items_from_library(key)
 
     genres = extract_genres(items)
     form = request.form
@@ -494,15 +517,17 @@ def index():
                 'show_three': 'show_three' in form
             }
 
-            if media_type == 'movie' and movie_key:
-                filtered += get_items_from_library(movie_key, unwatched=unwatched)
-            elif media_type == 'show' and show_key:
-                filtered += get_items_from_library(show_key, unwatched=unwatched)
+            if media_type == 'movie' and movie_keys:
+                for key in movie_keys:
+                    filtered += get_items_from_library(key, unwatched=unwatched)
+            elif media_type == 'show' and show_keys:
+                for key in show_keys:
+                    filtered += get_items_from_library(key, unwatched=unwatched)
             else:
-                if movie_key:
-                    filtered += get_items_from_library(movie_key, unwatched=unwatched)
-                if show_key:
-                    filtered += get_items_from_library(show_key, unwatched=unwatched)
+                for key in movie_keys:
+                    filtered += get_items_from_library(key, unwatched=unwatched)
+                for key in show_keys:
+                    filtered += get_items_from_library(key, unwatched=unwatched)
             
             print(f"After fetch: {len(filtered)} items total", flush=True)
 
@@ -587,8 +612,8 @@ def index():
                            pick_history=pick_history,
                            show_history=session.get('show_history', False),
                            filters=filters,
-                           has_movies=bool(movie_key),
-                           has_tvshows=bool(show_key),
+                           has_movies=bool(movie_keys),
+                           has_tvshows=bool(show_keys),
                            default_theme=config.get("default_theme", "dark"),
                            config=config,
                            all_seen=session.get('all_seen', False),
@@ -637,8 +662,17 @@ def settings():
         server_uri = request.form.get('plex_server_url')
         selected_server = next((s for s in config.get('plex_servers', []) if s['uri'] == server_uri), None)
         config['plex_server_url'] = selected_server['uri'] if selected_server else server_uri
-        config['movies_library'] = request.form.get('movies_library') or None
-        config['tvshows_library'] = request.form.get('tvshows_library') or None
+        
+        # Handle multi-select libraries (getlist returns empty list if none selected)
+        movies_libraries = request.form.getlist('movies_library')
+        tvshows_libraries = request.form.getlist('tvshows_library')
+        config['movies_libraries'] = [lib for lib in movies_libraries if lib]  # Filter out empty strings
+        config['tvshows_libraries'] = [lib for lib in tvshows_libraries if lib]
+        
+        # Keep old single-value keys for backward compatibility
+        config['movies_library'] = config['movies_libraries'][0] if config['movies_libraries'] else None
+        config['tvshows_library'] = config['tvshows_libraries'][0] if config['tvshows_libraries'] else None
+        
         config['default_theme'] = request.form.get('default_theme', 'dark')
         config['enable_history'] = 'enable_history' in request.form
         
