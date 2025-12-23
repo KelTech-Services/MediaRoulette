@@ -84,6 +84,20 @@
                 </select>
             </div>
             <div class="form-group">
+                <label for="min_score">Minimum Star Score</label>
+                <select name="min_score" id="min_score">
+                    <option value="" {% if not filters.min_score %}selected{% endif %}>Any Score</option>
+                    <option value="5" {% if filters.min_score == '5' %}selected{% endif %}>⭐ 5+</option>
+                    <option value="6" {% if filters.min_score == '6' %}selected{% endif %}>⭐ 6+</option>
+                    <option value="7" {% if filters.min_score == '7' %}selected{% endif %}>⭐ 7+</option>
+                    <option value="8" {% if filters.min_score == '8' %}selected{% endif %}>⭐ 8+</option>
+                    <option value="9" {% if filters.min_score == '9' %}selected{% endif %}>⭐ 9+</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
                 <label for="keyword">Keyword</label>
                 <input type="text" name="keyword" id="keyword" placeholder="e.g. survival, comedy" value="{{ filters.keyword or '' }}">
             </div>
@@ -130,7 +144,7 @@
         <p><strong>Genres:</strong> {{ result.genres or 'N/A' }}</p>
         <p><strong>Rating:</strong> {{ result.rating or 'N/A' }}</p>
         {% if result.audience_rating %}
-        <p><strong>Audience Score:</strong> 🍅 {{ result.audience_rating }}</p>
+        <p><strong>Audience Score:</strong> ⭐ {{ result.audience_rating }}</p>
         {% endif %}
         <p style="margin: 16px 0;">{{ result.summary }}</p>
 
@@ -181,7 +195,7 @@
                 <p><strong>Genres:</strong> {{ item.genres or 'N/A' }}</p>
                 <p><strong>Rating:</strong> {{ item.rating or 'N/A' }}</p>
                 {% if item.audience_rating %}
-                <p><strong>Audience Score:</strong> 🍅 {{ item.audience_rating }}</p>
+                <p><strong>Audience Score:</strong> ⭐ {{ item.audience_rating }}</p>
                 {% endif %}
                 <p style="margin: 16px 0;">{{ item.summary }}</p>
                 {% if item.link %}

@@ -512,6 +512,7 @@ def index():
                 'genre': form.get('genre', ''),
                 'rating': form.get('rating', ''),
                 'keyword': form.get('keyword', ''),
+                'min_score': form.get('min_score', ''),
                 'unwatched': unwatched,
                 'recent_releases': 'recent_releases' in form,
                 'show_three': 'show_three' in form
@@ -560,6 +561,10 @@ def index():
             if form.get('recent_releases'):
                 cutoff = datetime.now() - timedelta(days=5 * 365)
                 filtered = [i for i in filtered if i.get('originallyAvailableAt') and datetime.strptime(i.get('originallyAvailableAt'), "%Y-%m-%d") > cutoff]
+            if form.get('min_score'):
+                min_score = float(form.get('min_score'))
+                filtered = [i for i in filtered if i.get('audienceRating') and float(i.get('audienceRating', 0)) >= min_score]
+                print(f"After min_score filter ({min_score}+): {len(filtered)} items", flush=True)
 
             print(f"Final filtered count: {len(filtered)}", flush=True)
             
