@@ -123,7 +123,15 @@
     </form>
 
     <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border);">
-        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+        <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+            <form method="POST" action="{{ url_for('reset_password') }}" onsubmit="return confirm('Are you sure? This will delete your admin account and require you to create a new one.');">
+                <button type="submit" style="background: #cc7700; border: none; width: auto; padding: 12px 24px;">
+                    🔑 Reset Password
+                </button>
+            </form>
+            <span class="tooltip" style="cursor: help;">❓
+                <span class="tooltiptext">This deletes your admin account entirely. You will need to create a new username and password on the next page load.</span>
+            </span>
             <form method="GET" action="{{ url_for('signout') }}">
                 <button type="submit" style="background: #cc3333; border: none; width: auto; padding: 12px 24px;">
                     🔌 Disconnect Plex

@@ -93,11 +93,23 @@
             <label><input type="checkbox" name="unwatched" {% if filters.unwatched %}checked{% endif %}> Unwatched Only</label>
             <label><input type="checkbox" name="recent_releases" {% if filters.recent_releases %}checked{% endif %}> Recent (5 Years)</label>
             <label><input type="checkbox" name="show_three" {% if filters.show_three %}checked{% endif %}> Show 3 Results</label>
-            <button type="submit" name="reset_filters" value="true" style="width: auto; padding: 8px 16px; background: var(--bg-tertiary); color: var(--text-secondary); border: 1px solid var(--border); font-size: 14px;">↺ Reset Filters</button>
+            <button type="submit" name="reset_filters" value="true" title="Clears all filter selections and resets to defaults" style="width: auto; padding: 8px 16px; background: var(--bg-tertiary); color: var(--text-secondary); border: 1px solid var(--border); font-size: 14px;">↺ Reset Filters</button>
+            {% if seen_count > 0 %}
+            <button type="submit" name="reset_seen" value="true" title="Clears the list of items you've already seen, allowing them to appear again" style="width: auto; padding: 8px 16px; background: var(--bg-tertiary); color: var(--text-secondary); border: 1px solid var(--border); font-size: 14px;">🔄 Reset Seen Items ({{ seen_count }})</button>
+            {% endif %}
         </div>
 
         <button type="submit" id="spin-btn">🎲 Spin</button>
     </form>
+
+    {% if all_seen %}
+    <div style="background: rgba(229, 160, 21, 0.15); color: var(--accent); padding: 12px 16px; border-radius: 8px; margin: 16px 0; text-align: center;">
+        ⚠️ All {{ total_matching }} unique suggestions have been displayed based on your criteria. If you continue spinning, you will see repeat suggestions.
+        <form method="POST" style="display: inline; margin-left: 8px;">
+            <button type="submit" name="reset_seen" value="true" style="width: auto; padding: 6px 12px; font-size: 13px; background: var(--accent); color: #000;">Reset Seen Items</button>
+        </form>
+    </div>
+    {% endif %}
 
     {% if results is not none and results|length == 0 %}
     <p class="text-center text-muted" style="margin: 24px 0;">No matches found. Try adjusting your filters.</p>

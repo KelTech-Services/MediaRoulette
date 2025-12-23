@@ -59,10 +59,45 @@
             box-sizing: border-box;
         }
 
+        .form-group .password-wrapper input {
+            width: auto;
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
         .form-group input:focus {
             outline: none;
             border-color: var(--accent);
             box-shadow: 0 0 0 3px rgba(229, 160, 21, 0.15);
+        }
+
+        .password-wrapper {
+            display: flex;
+            flex-direction: row;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .toggle-password {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 16px;
+            padding: 12px;
+            line-height: 1;
+            flex: 0 0 auto;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toggle-password:hover {
+            color: var(--text-primary);
+            border-color: var(--accent);
         }
 
         .submit-btn {
@@ -116,17 +151,36 @@
 
                 <div class="form-group">
                     <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required autocomplete="new-password">
+                    <div class="password-wrapper">
+                        <input type="password" id="password" name="password" required autocomplete="new-password">
+                        <button type="button" class="toggle-password" onclick="togglePassword('password', this)">👁</button>
+                    </div>
                 </div>
 
                 <div class="form-group">
                     <label for="confirm_password">Confirm Password</label>
-                    <input type="password" id="confirm_password" name="confirm_password" required autocomplete="new-password">
+                    <div class="password-wrapper">
+                        <input type="password" id="confirm_password" name="confirm_password" required autocomplete="new-password">
+                        <button type="button" class="toggle-password" onclick="togglePassword('confirm_password', this)">👁</button>
+                    </div>
                 </div>
 
                 <button type="submit" class="submit-btn">Create Account</button>
             </form>
         </div>
     </div>
+
+    <script>
+        function togglePassword(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.textContent = '🙈';
+            } else {
+                input.type = 'password';
+                btn.textContent = '👁';
+            }
+        }
+    </script>
 </body>
 </html>

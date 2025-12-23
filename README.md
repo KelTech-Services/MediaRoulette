@@ -171,6 +171,34 @@ docker run -d -p 5000:5000 -v mediaroulette-data:/app/data mediaroulette
 
 ---
 
+## Troubleshooting
+
+### Forgot Password / Locked Out
+
+If you forgot your password or mistyped it during setup, you can reset your account:
+
+**Option 1: Via Settings (if logged in)**
+
+Go to **Settings** and click **Reset Password**. This will delete your account and redirect you to create a new one.
+
+**Option 2: Manual Reset (if locked out)**
+
+Delete the `users.json` file from your data directory and refresh the page:
+
+```bash
+# Docker volume
+docker exec mediaroulette rm /app/data/users.json
+
+# Or if using a bind mount (e.g., Portainer/Unraid)
+rm /path/to/your/data/users.json
+```
+
+After deleting the file, reload MediaRoulette in your browser — you'll be prompted to create a new admin account.
+
+> **Note:** This only resets your MediaRoulette login. Your Plex connection and settings are preserved in `config.json`.
+
+---
+
 ## Tech Stack
 
 - **Backend:** Python, Flask

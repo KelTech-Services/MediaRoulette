@@ -175,6 +175,17 @@ def app_logout():
     print(f"User logged out: {username}", flush=True)
     return redirect(url_for('login'))
 
+@app.route('/reset_password', methods=['POST'])
+@login_required
+def reset_password():
+    """Delete users.json to allow creating a new admin account"""
+    username = session.get('username', 'unknown')
+    if os.path.exists(USERS_FILE):
+        os.remove(USERS_FILE)
+        print(f"[MediaRoulette] Admin account reset by: {username}", flush=True)
+    session.clear()
+    return redirect(url_for('setup'))
+
 @app.route('/plex_login')
 @login_required
 def plex_login():
@@ -437,6 +448,14 @@ def index():
             # Clear saved filters and results
             session.pop('filters', None)
             session.pop('saved_results', None)
+            session.pop('seen_items', None)  # Also reset seen items when filters change
+        elif 'reset_seen' in form:
+            # Clear seen items and results
+            session.pop('seen_items', None)
+            session.pop('saved_results', None)
+            session.pop('seen_count', None)
+            session.pop('all_seen', None)
+            session.pop('total_matching', None)
         elif 'add_to_watchlist' in form:
             item = {
                 'title': form.get('saved_title'),
@@ -518,9 +537,33 @@ def index():
                 filtered = [i for i in filtered if i.get('originallyAvailableAt') and datetime.strptime(i.get('originallyAvailableAt'), "%Y-%m-%d") > cutoff]
 
             print(f"Final filtered count: {len(filtered)}", flush=True)
+            
+            # Track seen items to avoid repeats
+            seen_items = set(session.get('seen_items', []))
+            total_matching = len(filtered)
+            
+            # Filter out already-seen items
+            unseen = [i for i in filtered if i.get('ratingKey') not in seen_items]
+            print(f"Unseen items: {len(unseen)} of {total_matching}", flush=True)
+            
+            # Check if all unique items exhausted
+            all_seen = len(unseen) == 0 and total_matching > 0
+            
+            # If all seen, use full filtered list (allow repeats)
+            pool = unseen if unseen else filtered
+            
             picks = 3 if 'show_three' in form else 1
-            results = [build_item_data(i, machine_id) for i in random.sample(filtered, min(picks, len(filtered)))]
+            selected = random.sample(pool, min(picks, len(pool)))
+            results = [build_item_data(i, machine_id) for i in selected]
             print(f"Picked {len(results)} result(s): {[r['title'] for r in results]}", flush=True)
+            
+            # Add picked items to seen list
+            for item in selected:
+                seen_items.add(item.get('ratingKey'))
+            session['seen_items'] = list(seen_items)
+            session['all_seen'] = all_seen
+            session['seen_count'] = len(seen_items)
+            session['total_matching'] = total_matching
 
             # Save results to session
             session['saved_results'] = results
@@ -547,7 +590,10 @@ def index():
                            has_movies=bool(movie_key),
                            has_tvshows=bool(show_key),
                            default_theme=config.get("default_theme", "dark"),
-                           config=config)
+                           config=config,
+                           all_seen=session.get('all_seen', False),
+                           seen_count=session.get('seen_count', 0),
+                           total_matching=session.get('total_matching', 0))
 
 @app.route('/api/server_libraries/<path:server_uri>')
 @login_required
