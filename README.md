@@ -216,7 +216,7 @@ MIT License — see [LICENSE](LICENSE) for details.
 
 ## Contributing
 
-Contributions are welcome! Please open an issue or submit a pull request.
+Contributions are welcome! Please see our [Contributing Guide](CONTRIBUTING.md) for details on how to report bugs, request features, and support the project.
 
 ---
 
